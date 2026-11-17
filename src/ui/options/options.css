@@ -1,0 +1,215 @@
+/* Settings page layout */
+
+.options-header {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-5) var(--space-5);
+}
+.options-header h1 {
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+}
+.options-header .logo svg {
+  width: 40px;
+  height: 40px;
+}
+.options-header .muted {
+  font-weight: 400;
+}
+
+.options-main {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--space-5) var(--space-10);
+}
+
+.options-section {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+.options-section > h2 {
+  font-size: var(--text-xl);
+  line-height: 1.25;
+}
+.options-section > .btn {
+  justify-self: start;
+}
+
+.field-label {
+  display: block;
+  font-weight: 700;
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+.field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.range-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Switch rows */
+.switch-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+.switch-row-text {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 52ch;
+}
+
+/* Sites list */
+.site-list {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.site-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+}
+.site-list li + li {
+  border-top: 1px solid var(--border);
+}
+.site-name {
+  overflow-wrap: anywhere;
+}
+
+/* Theme picker */
+.theme-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.theme-picker legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+.theme-option {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 2px solid var(--control-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.theme-option:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.theme-option:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.theme-option input:focus-visible {
+  outline: none;
+}
+.theme-swatch {
+  display: grid;
+  gap: 6px;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1;
+}
+.swatch-line {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+}
+.swatch-line.short {
+  width: 55%;
+}
+.theme-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  font-weight: 700;
+}
+.theme-choice input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* Range inputs */
+input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.size-sample {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* Select */
+.select {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Shortcuts */
+.shortcut-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.shortcut-table th,
+.shortcut-table td {
+  padding: var(--space-2) 0;
+  text-align: start;
+  border-bottom: 1px solid var(--border);
+}
+.shortcut-table th {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.shortcut-table td:last-child,
+.shortcut-table th:last-child {
+  text-align: end;
+}
+
+@media (max-width: 520px) {
+  .options-section {
+    padding: var(--space-4);
+  }
+  .switch-row {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}

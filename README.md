@@ -8,7 +8,7 @@ A Chrome extension for visually impaired users. It:
 
 Edge installs it from the Chrome Web Store too.
 
-> Status: in development (Phase 1 of 6). Not yet published.
+> Status: in development (Phase 2 of 6). Not yet published.
 
 ## Not an "accessibility overlay"
 Site-injected overlays (scripts a site owner adds for every visitor) have a bad reputation with
@@ -30,6 +30,7 @@ npm run build      # production build in .output/chrome-mv3/
 npm test           # unit tests
 npm run typecheck  # TypeScript check
 npm run dev        # dev build with auto-reload (opens Chrome)
+npm run design     # design preview with sample data at http://localhost:5180
 ```
 
 To load the build in your own Chrome: open `chrome://extensions`, turn on **Developer mode**,

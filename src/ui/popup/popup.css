@@ -1,0 +1,126 @@
+/* Popup layout. Width is fixed by Chrome's popup frame; 360px keeps lines short. */
+
+body {
+  width: 360px;
+}
+
+/* Chrome caps popups at 600px tall; the default view (page check collapsed)
+   is kept under that so it never needs to scroll. */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3) var(--space-2) var(--space-4);
+}
+.popup-header h1 {
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+.popup-header .logo svg {
+  width: 30px;
+  height: 30px;
+}
+
+.popup-main {
+  display: grid;
+  gap: 10px;
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* Site switch */
+.site-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+}
+.site-text {
+  display: grid;
+  min-width: 0;
+}
+.site-host {
+  overflow-wrap: anywhere;
+}
+
+.popup-actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Fixed on this page */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+.badge-accent {
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+}
+.card-empty {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.count-list {
+  padding: 0 var(--space-4) var(--space-3);
+}
+.count-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px 0;
+  line-height: 1.4;
+  border-top: 1px solid var(--border);
+}
+.count-list li:first-child {
+  border-top: 0;
+}
+.count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Page check */
+.page-check > summary .badge {
+  font-weight: 400;
+}
+.page-check-body {
+  padding: 0 var(--space-4) var(--space-2);
+}
+.page-check-body .count-list {
+  padding: 0 0 var(--space-2);
+}
+.subhead {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.issue-list {
+  margin: 0 0 var(--space-2);
+  padding-inline-start: var(--space-5);
+}
+.issue-list li {
+  padding: var(--space-1) 0;
+}
+.all-clear {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-2);
+}
+.all-clear svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.small {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}

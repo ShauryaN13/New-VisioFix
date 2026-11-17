@@ -52,7 +52,8 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 **Working agreement**
 - One phase at a time. After each phase: what was built, how to load and test it in Chrome,
   what's still weak, and a short screen-reader checklist. Then wait for the user.
-- Commit to `main` at the end of each phase with a clear message. Update Progress below.
+- Commit to `main` at the end of each phase with a clear message, then **push to GitHub**
+  (`origin`, github.com/ShauryaN13/New-VisioFix). Update Progress below.
 - Be honest about limits; never fake something that can't be done reliably.
 - Explain decisions in plain terms: the user needs to understand and defend this code.
 
@@ -72,6 +73,9 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm run zip` | Store zip |
 | `npm test` | Vitest unit tests (jsdom) |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run design` | Design preview (dev only) at http://localhost:5180: every screen with sample data |
+| `npm run icons` | Renders `src/assets/icon*.svg` to `public/icon/{16,32,48,128}.png` |
+| `npm run fonts` | Copies the used woff2 files + OFL from the pinned @fontsource package to `public/fonts/` |
 | `npm run fixtures` | (Phase 3) serves `tests/fixtures/` on localhost; tiny Node script, no dependency |
 
 **Dependencies** (✓ = installed)
@@ -81,9 +85,9 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | ✓ `typescript` 5.9.3 | no | Type checking (5.9 matches WXT's template; not TS 7) |
 | ✓ `vite` 8.3.8 | no | WXT's bundler (peer dependency) |
 | ✓ `vitest` 5.1.0, `jsdom` 31.0.1 | no | Unit tests with a DOM |
-| ✓ `web-ext` 10.8.0 | no | Lets `npm run dev` open Chrome with VisioFix loaded (optional; without it, load `.output/chrome-mv3-dev` by hand) |
-| `@fontsource/atkinson-hyperlegible-next` | font files | Phase 2. Atkinson Hyperlegible Next (Braille Institute, 2025, OFL) |
-| `@resvg/resvg-js` | no | Phase 2. Renders the SVG icon to PNGs |
+| ✓ `web-ext` 10.8.0 | no | Lets `npm run dev` open Chrome with VisioFix loaded (kept by user decision) |
+| ✓ `@fontsource/atkinson-hyperlegible-next` 5.3.0 | font files only | Source of the font (Braille Institute, 2025, OFL). Dev dependency: `npm run fonts` copies 8 woff2 files (Latin + Latin Ext, 400/700, normal/italic) into `public/fonts/`, which are committed and ship |
+| ✓ `@resvg/resvg-js` 2.6.2 | no | Renders the SVG icon to PNGs (`npm run icons`) |
 | `dom-accessibility-api` 0.7.x | yes | Phase 3. Accessible-name computation per spec |
 | `@mozilla/readability` 0.6.0 | yes | Phase 4. Focus Mode extraction (Firefox Reader View's engine) |
 
@@ -184,8 +188,35 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
 - Settings: global on/off, default theme, text size, voice (+ "Allow online voices"), speed,
   list of keyboard shortcuts.
 - Popup and settings follow system light/dark. Font: Atkinson Hyperlegible Next.
-- Accent: deep blue around #1A56DB (6.2:1 with white text); VisioFix yellow #FFD400 only on dark
-  backgrounds (logo tile, 14.7:1). Finalize in Phase 2. New icon that reads at 16px and 128px.
+- Accent: deep blue #1A56DB in light (white text 6.2:1), #8AB4FF in dark (with #0B1530 text).
+  Focus Mode's light theme uses #1546B5 for its Play button and focus ring, because Focus Mode
+  needs AAA (7:1). VisioFix yellow #FFD400 appears only on the near-black logo tile (14.7:1).
+
+### Design system (Phase 2)
+- Tokens in `src/ui/tokens.css`, each color written once as `light-dark(LIGHT, DARK)`;
+  `data-theme` on `<html>` forces one side (used by the preview). Shared components in
+  `src/ui/base.css` (buttons, switch, cards, disclosure, badges, message). 4px spacing grid,
+  radius 8/12/16, 44px minimum targets, 3px focus ring with 2px offset, transitions off under
+  reduced motion, forced-colors support for the switch and the reading highlight.
+- Views are pure functions of state with handlers passed in, no browser APIs:
+  `src/ui/popup/view.ts` (`renderPopup`), `src/ui/options/view.ts` (`renderOptions`),
+  `src/focus/view.ts` (`renderFocusView`, from the `FocusDoc` model in `src/focus/model.ts`).
+  Report types the popup shows live in `src/shared/report.ts`.
+- DOM is built with `h()` from `src/ui/dom.ts` and icons with `createElementNS`
+  (`src/ui/icons.ts`): never innerHTML, so it works on sites that enforce Trusted Types.
+- Focus Mode CSS (`src/focus/focus.css`) is self-contained for the shadow root: px for the
+  toolbar, em for the article scaled by `--vf-text-size`; no rem. Themes are
+  `.vf-focus[data-theme='contrast'|'dark'|'light']` with `--f-*` variables. Below 640px the
+  toolbar's text labels become visually hidden so it fits in two rows.
+- Popup: switch is labeled "Automatic repairs" + host; Focus Mode works even when repairs are
+  off. States: ready (with report), repairs off for site, off everywhere, can't run here, needs
+  reload. The busiest default view (page check collapsed) is 586px, under Chrome's 600px cap.
+- `tests/unit/contrast.test.ts` reads the colors from the CSS and checks every pair (AA for
+  popup/settings, AAA for Focus Mode, 3:1 for outlines). Add new color pairs there.
+- Icon: `src/assets/icon.svg` (48/128: 96px tile in a 128 canvas, eye + check) and
+  `src/assets/icon-small.svg` (16/32: full tile, no check). `logoMark()` draws the same mark inline.
+- Design preview: `preview/` (Vite, dev only, not in the extension). `frame.html?screen=…`
+  renders one screen per frame; Focus Mode renders inside a shadow root like the real thing.
 
 ## Legacy code (`legacy/android-v1`, `legacy/android-v2`)
 Code is in `app/src/main/java/com/example/cleanview/` (MainActivity.java, FocusAdapter.java).
@@ -217,10 +248,14 @@ Also found in review:
 src/
   entrypoints/  background.ts · content.ts (→ content/ later) · popup/ · options/ · preview/ (dev-only)
   repair/       engine.ts · changes.ts · names.ts · controls.ts · images.ts · aria.ts · headings.ts
-  focus/        overlay.ts · extract.ts · build.ts · toolbar.ts · themes.css
+  focus/        model.ts · view.ts · focus.css (Phase 2) · overlay.ts · extract.ts · build.ts
   speech/       sentences.ts · player.ts · highlight.ts
-  shared/       site.ts · matches.ts · messages.ts · settings.ts · dom.ts
-  ui/           tokens.css · components.css · fonts.ts
+  shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts
+  ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts · popup/ · options/
+  assets/       icon.svg · icon-small.svg
+preview/        design preview (dev only): index.html · frame.html · sample-data.ts
+scripts/        build-icons.mjs · copy-fonts.mjs
+public/fonts/   Atkinson Hyperlegible Next woff2 files + OFL.txt
 public/icon/    16, 32, 48, 128 PNGs (from a detailed SVG and a simplified small-size SVG)
 tests/unit/     *.test.ts
 tests/fixtures/ legacy-bugs, controls, images (incl. lazy-loaded + hidden), aria, headings,
@@ -258,3 +293,9 @@ legacy/         reference only, excluded from the build
   "reload this page". `getSiteKey()` in `src/shared/site.ts` with 6 unit tests. Verified the
   production build in headless Chrome 157: service worker starts, content script answers the
   popup, popup renders, no console errors. Not yet tried: `npm run dev` (opens a Chrome window).
+  Pushed to GitHub.
+- **Phase 2: built (2026-11-16), waiting for the user's approval of the look.** Design system,
+  icon (16/32/48/128 PNGs), popup/Focus Mode/settings views with sample data, design preview
+  (`npm run design`), contrast tests (104 tests pass). The toolbar popup in the extension is still
+  the Phase 1 placeholder; the real popup switches to the new view when it's wired in Phase 3.
+  The contrast test caught Focus Mode light's Play button at 6.2:1 and it was darkened to #1546B5.

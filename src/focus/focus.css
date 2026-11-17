@@ -1,0 +1,454 @@
+/*
+ * Focus Mode styles. This CSS lives inside Focus Mode's shadow root, so it
+ * must not depend on page styles or on rem units (rem follows the page's
+ * <html> font size). The toolbar uses px; the article uses em, scaled by
+ * --vf-text-size so the text-size setting resizes the whole article.
+ *
+ * Every text color passes WCAG AAA (7:1) against its background; checked by
+ * tests/unit/contrast.test.ts.
+ */
+
+/* ---------- Themes ---------- */
+
+.vf-focus[data-theme='contrast'] {
+  /* VisioFix's signature from the original app */
+  --f-bg: #000000;
+  --f-text: #ffffff;
+  --f-h1: #ffff00;
+  --f-h2: #ffd700;
+  --f-h3: #ffffff;
+  --f-link: #00ffff;
+  --f-muted: #d9d9d9;
+  --f-rule: #ffffff;
+  --f-quote-bar: #ffd700;
+  --f-code-bg: #1a1a1a;
+  --f-toolbar-bg: #000000;
+  --f-toolbar-line: #ffff00;
+  --f-control-text: #ffffff;
+  --f-control-border: #ffffff;
+  --f-control-bg: #000000;
+  --f-control-hover: #262626;
+  --f-primary-bg: #ffff00;
+  --f-primary-text: #000000;
+  --f-primary-hover: #ffff80;
+  --f-focus: #00ffff;
+  --f-hl-bg: #ffff00;
+  --f-hl-text: #000000;
+  --f-hl-line: #000000;
+  --f-notice-border: #ffff00;
+}
+
+.vf-focus[data-theme='dark'] {
+  --f-bg: #15171b;
+  --f-text: #e9ebef;
+  --f-h1: #ffffff;
+  --f-h2: #f3f4f6;
+  --f-h3: #f3f4f6;
+  --f-link: #9cc2ff;
+  --f-muted: #b8bec9;
+  --f-rule: #3a404a;
+  --f-quote-bar: #9cc2ff;
+  --f-code-bg: #20242b;
+  --f-toolbar-bg: #1c1f25;
+  --f-toolbar-line: #363c46;
+  --f-control-text: #e9ebef;
+  --f-control-border: #8a93a3;
+  --f-control-bg: #1c1f25;
+  --f-control-hover: #2a2f37;
+  --f-primary-bg: #9cc2ff;
+  --f-primary-text: #0b1530;
+  --f-primary-hover: #b8d4ff;
+  --f-focus: #ffd400;
+  --f-hl-bg: #33456e;
+  --f-hl-text: #ffffff;
+  --f-hl-line: #ffd400;
+  --f-notice-border: #9cc2ff;
+}
+
+.vf-focus[data-theme='light'] {
+  /* Soft off-white, not pure white, to reduce glare */
+  --f-bg: #fbf8f1;
+  --f-text: #1d1c1a;
+  --f-h1: #121110;
+  --f-h2: #121110;
+  --f-h3: #121110;
+  --f-link: #0b4aa8;
+  --f-muted: #4f4b43;
+  --f-rule: #d6d0c2;
+  --f-quote-bar: #0b4aa8;
+  --f-code-bg: #efe9dc;
+  --f-toolbar-bg: #f1ece1;
+  --f-toolbar-line: #d6d0c2;
+  --f-control-text: #1d1c1a;
+  --f-control-border: #6f6a60;
+  --f-control-bg: #fbf8f1;
+  --f-control-hover: #e6dfd0;
+  /* A shade darker than the popup's accent: white on #1A56DB is 6.2:1 (AA),
+     Focus Mode needs AAA (7:1). #1546B5 gives 8.2:1. */
+  --f-primary-bg: #1546b5;
+  --f-primary-text: #ffffff;
+  --f-primary-hover: #103a96;
+  --f-focus: #1546b5;
+  --f-hl-bg: #ffe27a;
+  --f-hl-text: #1d1c1a;
+  --f-hl-line: #1d1c1a;
+  --f-notice-border: #0b4aa8;
+}
+
+/* ---------- Frame ---------- */
+
+.vf-focus {
+  --vf-font: 'VisioFix Atkinson', 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--f-bg);
+  color: var(--f-text);
+  font-family: var(--vf-font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.vf-focus *,
+.vf-focus *::before,
+.vf-focus *::after {
+  box-sizing: border-box;
+}
+
+.vf-focus :focus-visible {
+  outline: 3px solid var(--f-focus);
+  outline-offset: 2px;
+}
+
+.vf-focus svg {
+  flex: none;
+}
+
+/* ---------- Toolbar (fixed px sizes: doesn't grow with text size) ---------- */
+
+.vf-toolbar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 10px 20px;
+  background: var(--f-toolbar-bg);
+  border-bottom: 2px solid var(--f-toolbar-line);
+  font-size: 16px;
+}
+
+.vf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 17px;
+  margin-inline-end: auto;
+}
+.vf-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.vf-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid var(--f-control-border);
+  border-radius: 10px;
+  background: var(--f-control-bg);
+  color: var(--f-control-text);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.vf-btn:hover {
+  background: var(--f-control-hover);
+}
+.vf-btn svg {
+  width: 22px;
+  height: 22px;
+}
+.vf-icon-btn {
+  padding: 8px;
+}
+
+.vf-btn-primary {
+  min-width: 108px;
+  background: var(--f-primary-bg);
+  border-color: var(--f-primary-bg);
+  color: var(--f-primary-text);
+}
+.vf-btn-primary:hover {
+  background: var(--f-primary-hover);
+  border-color: var(--f-primary-hover);
+}
+
+.vf-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.vf-select select {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 2px solid var(--f-control-border);
+  border-radius: 10px;
+  background: var(--f-control-bg);
+  color: var(--f-control-text);
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* ---------- Article (em sizes, scaled by --vf-text-size) ---------- */
+
+.vf-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vf-article {
+  max-width: 36em;
+  margin: 0 auto;
+  padding: 1.6em 1.5em 4em;
+  font-size: var(--vf-text-size, 22px);
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.vf-article > * + * {
+  margin-top: 0;
+}
+
+.vf-meta {
+  margin: 0 0 0.4em;
+  color: var(--f-muted);
+  font-size: 0.82em;
+}
+
+.vf-article h1,
+.vf-article h2,
+.vf-article h3,
+.vf-article h4,
+.vf-article h5,
+.vf-article h6 {
+  margin: 1.4em 0 0.45em;
+  font-weight: 700;
+  line-height: 1.25;
+  /* Keep the author's capitalization: no text-transform (legacy v2 uppercased everything) */
+}
+.vf-article h1 {
+  margin-top: 0;
+  font-size: 1.75em;
+  color: var(--f-h1);
+}
+.vf-article h2 {
+  font-size: 1.4em;
+  color: var(--f-h2);
+}
+.vf-article h3 {
+  font-size: 1.18em;
+  color: var(--f-h3);
+}
+.vf-article h4,
+.vf-article h5,
+.vf-article h6 {
+  font-size: 1em;
+  color: var(--f-h3);
+}
+
+.vf-article p,
+.vf-article ul,
+.vf-article ol,
+.vf-article blockquote,
+.vf-article pre,
+.vf-article figure {
+  margin: 0 0 1em;
+}
+
+.vf-article ul,
+.vf-article ol {
+  padding-inline-start: 1.4em;
+}
+.vf-article li + li {
+  margin-top: 0.35em;
+}
+.vf-article li > ul,
+.vf-article li > ol {
+  margin: 0.35em 0 0;
+}
+
+.vf-article a {
+  color: var(--f-link);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.vf-article blockquote {
+  padding: 0.1em 0 0.1em 1em;
+  border-inline-start: 0.25em solid var(--f-quote-bar);
+}
+.vf-article blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.vf-article code,
+.vf-article pre {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.9em;
+}
+.vf-article pre {
+  padding: 0.8em 1em;
+  border-radius: 0.4em;
+  background: var(--f-code-bg);
+  white-space: pre-wrap;
+}
+
+.vf-article figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.3em;
+}
+.vf-article figcaption {
+  margin-top: 0.5em;
+  color: var(--f-muted);
+  font-size: 0.85em;
+}
+
+.vf-notice {
+  display: flex;
+  gap: 0.6em;
+  align-items: flex-start;
+  padding: 0.8em 1em;
+  border: 2px solid var(--f-notice-border);
+  border-radius: 0.5em;
+  font-size: 0.85em;
+}
+.vf-notice svg {
+  width: 1.3em;
+  height: 1.3em;
+  margin-top: 0.1em;
+}
+
+/* ---------- Read-aloud ---------- */
+
+/* The sentence being read: a background band plus an underline, so it never
+   depends on color alone. box-decoration-break keeps the band on every line. */
+.vf-sentence.is-current {
+  background: var(--f-hl-bg);
+  color: var(--f-hl-text);
+  text-decoration: underline;
+  text-decoration-color: var(--f-hl-line);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.22em;
+  border-radius: 0.15em;
+  padding: 0.04em 0.08em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.vf-sentence.is-current a {
+  color: inherit;
+}
+
+/* "Read from here": a mouse convenience in the left margin, shown on hover.
+   Hidden from screen readers and the Tab order; keyboard users press Play,
+   which starts at the first paragraph on screen. */
+.vf-article > p,
+.vf-article li {
+  position: relative;
+}
+.vf-play-here {
+  position: absolute;
+  left: -2.1em;
+  top: 0.1em;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  border: 2px solid var(--f-control-border);
+  border-radius: 50%;
+  background: var(--f-control-bg);
+  color: var(--f-control-text);
+  cursor: pointer;
+}
+.vf-play-here svg {
+  width: 0.8em;
+  height: 0.8em;
+}
+.vf-article > p:hover > .vf-play-here,
+.vf-article > p.is-hover > .vf-play-here {
+  display: inline-flex;
+}
+
+/* ---------- Narrow windows ----------
+   Visible labels for Speed, Theme and Close, and the "Focus Mode" title, become
+   visually hidden (screen readers still get them), so the toolbar fits in two rows. */
+@media (max-width: 640px) {
+  .vf-toolbar {
+    gap: 10px 12px;
+    padding: 8px 12px;
+  }
+  .vf-brand {
+    margin-inline-end: 0;
+  }
+  .vf-hide-narrow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .vf-close {
+    padding: 8px;
+  }
+  .vf-btn-primary {
+    min-width: 96px;
+  }
+  .vf-article {
+    padding: 1.2em 1em 3em;
+  }
+  .vf-play-here {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vf-focus * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .vf-sentence.is-current {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    text-decoration-color: HighlightText;
+  }
+}

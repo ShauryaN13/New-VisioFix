@@ -6,6 +6,6 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": [".wxt/wxt.d.ts", "src/**/*", "tests/**/*", "wxt.config.ts", "vitest.config.ts"],
+  "include": [".wxt/wxt.d.ts", "src/**/*", "tests/**/*", "preview/**/*", "wxt.config.ts", "vitest.config.ts"],
   "exclude": ["legacy", ".output", "node_modules"]
 }

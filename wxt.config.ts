@@ -15,6 +15,8 @@ export default defineConfig({
     host_permissions: SITE_MATCHES,
     action: {
       default_title: 'VisioFix',
+      // The simplified 16/32px drawing for the toolbar (public/icon, from `npm run icons`).
+      default_icon: { 16: 'icon/16.png', 32: 'icon/32.png' },
     },
   },
 });

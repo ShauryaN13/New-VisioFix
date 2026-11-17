@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- VisioFix icon, detailed version (48px and 128px).
+       Chrome's guidance: 96x96 artwork inside a 128x128 canvas, 16px transparent padding.
+       A yellow eye on a near-black tile (the original app's high-contrast signature),
+       with a check mark in the iris: vision, fixed. -->
+  <rect x="16" y="16" width="96" height="96" rx="22" fill="#0B0B0C"/>
+  <path d="M27 64 Q64 28 101 64 Q64 100 27 64 Z" fill="none" stroke="#FFD400" stroke-width="7" stroke-linejoin="round"/>
+  <circle cx="64" cy="64" r="14.5" fill="#FFD400"/>
+  <path d="M56.5 64.5 L61.8 69.8 L71.5 59.2" fill="none" stroke="#0B0B0C" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
