@@ -2,7 +2,6 @@ import '@/ui/fonts.css';
 import '@/ui/tokens.css';
 import '@/ui/base.css';
 import './gallery.css';
-import { CHOSEN_ICON, ICON_CONCEPTS } from '@/assets/brand';
 import { h } from '@/ui/dom';
 
 /** Builds the gallery of frames. Each frame reports its height so popups show at full length. */
@@ -40,41 +39,26 @@ function section(id: string, title: string, intro: string, ...content: HTMLEleme
   );
 }
 
-/** One concept on Chrome's light and dark toolbar colors, at every size. */
-function conceptCard(conceptId: string): HTMLElement {
-  const concept = ICON_CONCEPTS.find((c) => c.id === conceptId)!;
-  const strip = (bg: string, fg: string, label: string) =>
-    h(
-      'div',
-      { class: 'icon-strip', style: `background:${bg};color:${fg}` },
-      h('span', { class: 'icon-strip-label' }, label),
-      ...[16, 32, 48, 128].map((size) =>
-        h(
-          'span',
-          { class: 'icon-cell' },
-          h('img', { src: `/concepts/${concept.id}-${size}.png`, width: size, height: size, alt: '' }),
-          h('span', null, `${size}`),
-        ),
-      ),
+/** The icon on Chrome's light and dark toolbar colors, at every size it ships in. */
+function iconStrip(bg: string, fg: string, label: string): HTMLElement {
+  return h(
+    'div',
+    { class: 'icon-strip', style: `background:${bg};color:${fg}` },
+    h('span', { class: 'icon-strip-label' }, label),
+    ...[16, 32, 48, 128].map((size) =>
       h(
         'span',
         { class: 'icon-cell' },
-        h('img', { src: `/concepts/${concept.id}-16.png`, width: 64, height: 64, class: 'pixelated', alt: '' }),
-        h('span', null, '16 at 4×'),
+        h('img', { src: `/icon/${size}.png`, width: size, height: size, alt: '' }),
+        h('span', null, `${size}`),
       ),
-    );
-  return h(
-    'article',
-    { class: `concept card${concept.id === CHOSEN_ICON ? ' is-chosen' : ''}` },
-    h(
-      'div',
-      { class: 'concept-head' },
-      h('h3', null, concept.name),
-      concept.id === CHOSEN_ICON && h('span', { class: 'chip' }, 'Recommended'),
     ),
-    h('p', { class: 'muted' }, concept.description),
-    strip('#f1f3f4', '#3c4043', 'Light toolbar'),
-    strip('#35363a', '#e8eaed', 'Dark toolbar'),
+    h(
+      'span',
+      { class: 'icon-cell' },
+      h('img', { src: '/icon/16.png', width: 64, height: 64, class: 'pixelated', alt: '' }),
+      h('span', null, '16 at 4×'),
+    ),
   );
 }
 
@@ -82,9 +66,9 @@ const gallery = document.getElementById('gallery') as HTMLElement;
 gallery.append(
   section(
     'icon',
-    'Icon concepts',
-    'Three directions on the deep navy tile, at every size Chrome uses, on its light and dark toolbars. 16 and 32px use a simplified drawing. The recommended one is already used for the logo mark in the screens below.',
-    h('div', { class: 'concepts' }, ...ICON_CONCEPTS.map((c) => conceptCard(c.id))),
+    'Icon',
+    'The code eye: an eye whose corners are HTML angle brackets, with a yellow pupil, on the deep navy tile. 16 and 32px use a simplified drawing without eyelids, so it reads as “< • >”.',
+    h('div', { class: 'icon-strips' }, iconStrip('#f1f3f4', '#3c4043', 'Light toolbar'), iconStrip('#35363a', '#e8eaed', 'Dark toolbar')),
   ),
   section(
     'popup',

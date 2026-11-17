@@ -1,4 +1,4 @@
-import { type BrandShape, CHOSEN_ICON, getConcept } from '@/assets/brand';
+import { type BrandShape, ICON } from '@/assets/brand';
 import { setAll } from '@/ui/icons';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -8,8 +8,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  * (src/assets/brand.ts). Decorative: it always sits next to the visible name.
  * Below 24px it uses the simplified drawing made for small sizes.
  */
-export function logoMark(size = 32, className = 'logo-mark', conceptId = CHOSEN_ICON): SVGSVGElement {
-  const concept = getConcept(conceptId);
+export function logoMark(size = 32, className = 'logo-mark'): SVGSVGElement {
   const small = size < 24;
   const svg = document.createElementNS(SVG_NS, 'svg');
   setAll(svg, {
@@ -20,7 +19,7 @@ export function logoMark(size = 32, className = 'logo-mark', conceptId = CHOSEN_
     focusable: 'false',
     class: className,
   });
-  for (const shape of small ? concept.small : concept.detailed) svg.appendChild(toElement(shape));
+  for (const shape of small ? ICON.small : ICON.detailed) svg.appendChild(toElement(shape));
   return svg;
 }
 

@@ -74,7 +74,7 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm test` | Vitest unit tests (jsdom) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run design` | Design preview (dev only) at http://localhost:5180: every screen with sample data |
-| `npm run icons` | Renders the chosen icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png`, and all concepts to `preview/concepts/` |
+| `npm run icons` | Renders the icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png` |
 | `npm run fonts` | Copies the used woff2 files to `public/fonts/` and the OFL to `public/licenses/` |
 | `npm run fixtures` | (Phase 3) serves `tests/fixtures/` on localhost; tiny Node script, no dependency |
 
@@ -202,11 +202,11 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
 **Icons**
 - Lucide v1.73.0 (ISC), only the SVGs we use, copied into `src/ui/icons.ts` (no package).
   Same 2px stroke everywhere. License ships in `public/licenses/lucide.txt`.
-- The VisioFix icon is data in `src/assets/brand.ts`: three concepts (code eye `< • >`,
-  V check, focus frame), each with a 16px "small" drawing and a 128px "detailed" drawing
-  (96px tile, 16px padding). `CHOSEN_ICON` picks the one used for `public/icon/*.png`
-  (`npm run icons`, which also renders all concepts into `preview/concepts/`) and for
-  `logoMark()` in `src/ui/logo.ts`. **Recommended: code eye. Waiting for the user's choice.**
+- The VisioFix icon is the **code eye** (chosen by the user 2026-11-16): an eye whose corners
+  are HTML angle brackets, with a yellow pupil, on the navy tile. It is data in
+  `src/assets/brand.ts` (`ICON`): a 16px "small" drawing (no eyelids, reads as `< • >`) and a
+  128px "detailed" drawing (96px tile, 16px padding). `npm run icons` renders
+  `public/icon/*.png`; `logoMark()` in `src/ui/logo.ts` draws it inline.
 
 **Code structure**
 - Tokens in `src/ui/tokens.css` (`light-dark(LIGHT, DARK)` per color; `data-theme` on `<html>`
@@ -286,7 +286,7 @@ src/
   speech/       sentences.ts · player.ts · highlight.ts
   shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts
   ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
-  assets/       brand.ts (icon concepts as data)
+  assets/       brand.ts (the icon as data)
 preview/        design preview (dev only): index.html · frame.html · sample-data.ts
 scripts/        build-icons.mjs · copy-fonts.mjs
 public/fonts/   Atkinson Hyperlegible Next woff2 files
@@ -339,6 +339,7 @@ legacy/         reference only, excluded from the build
   User feedback applied: larger type, one card level, navy brand, Lucide icons, motion,
   popup restructure (status, tiles, one number, can't-fix details page), Focus Mode toolbar
   with "Aa" panel + progress + reading time, Chrome-style settings, three icon concepts.
+  **Approved 2026-11-16; code eye icon chosen, other concepts removed.**
   Fixed the horizontal-scrollbar bug (fixed-width body + frame scrollbars; now fluid content,
   inner scroll area, ResizeObserver-sized frames) and native controls using the wrong color
   scheme in Focus Mode. 145 tests pass.
