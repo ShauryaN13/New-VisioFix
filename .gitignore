@@ -1,0 +1,19 @@
+# Dependencies and build output
+node_modules
+.output
+.wxt
+stats.html
+stats-*.json
+web-ext.config.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors and OS files (root only, so legacy/android-v2/.idea stays as it was copied)
+/.vscode/*
+!/.vscode/extensions.json
+/.idea
+.DS_Store
+Thumbs.db
+*.sw?

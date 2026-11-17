@@ -1,0 +1,12 @@
+<resources>
+    <style name="Base.Theme.CleanView" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#5C6BC0</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryVariant">#1E1E3A</item>
+        <item name="colorSurface">#0F0F1A</item>
+        <item name="android:colorBackground">#0A0A0F</item>
+        <item name="android:statusBarColor">#12121A</item>
+        <item name="android:navigationBarColor">#0A0A0F</item>
+    </style>
+    <style name="Theme.CleanView" parent="Base.Theme.CleanView"/>
+</resources>

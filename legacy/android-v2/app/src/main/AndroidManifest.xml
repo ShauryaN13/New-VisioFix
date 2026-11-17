@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  VisioFix — Semantic Repair Accessibility Browser
+  File: AndroidManifest.xml
+
+  Permission Rationale (Privacy-by-Design annotations)
+  ──────────────────────────────────────────────────────
+  INTERNET            → Required to load web pages inside WebView
+  VIBRATE             → Haptic feedback (link pulse / header pulse)
+  RECORD_AUDIO        → Voice search via SpeechRecognizer
+  MODIFY_AUDIO_SETTINGS → TTS engine output routing
+
+  The <queries> block declares intent visibility so Android 11+ (API 30+)
+  allows the app to detect and bind to installed SpeechRecognition services
+  (e.g. Google, Samsung) without a broad QUERY_ALL_PACKAGES permission.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+
+    <!-- Network -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Haptics -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Voice input -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- TTS audio routing -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Declare intent queries for speech recognition (API 30+ package visibility) -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="VisioFix"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CleanView"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:label="VisioFix Browser">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Handle http/https intent so VisioFix appears as a browser option -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+        </activity>
+    </application>
+
+</manifest>

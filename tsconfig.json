@@ -1,0 +1,11 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true
+  },
+  "include": [".wxt/wxt.d.ts", "src/**/*", "tests/**/*", "wxt.config.ts", "vitest.config.ts"],
+  "exclude": ["legacy", ".output", "node_modules"]
+}

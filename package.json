@@ -1,0 +1,24 @@
+{
+  "name": "visiofix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repairs common accessibility problems on the pages you visit and adds a high-contrast Focus Mode with read-aloud.",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "jsdom": "31.0.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.0",
+    "web-ext": "10.8.0",
+    "wxt": "0.21.5"
+  }
+}

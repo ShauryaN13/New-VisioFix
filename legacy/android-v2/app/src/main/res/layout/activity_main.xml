@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         HOME SCREEN — two full-height buttons stacked vertically.
+         Visible on launch, hidden once a page loads.
+    ═══════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/homeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- Top half: standard web search -->
+        <Button
+            android:id="@+id/btnHomeSearch"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:backgroundTint="#121212"
+            android:text="TAP TO SEARCH"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <!-- Bottom half: search and open in Focus Mode -->
+        <Button
+            android:id="@+id/btnHomeFocus"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:backgroundTint="#1A1A1A"
+            android:text="ENABLE FOCUS + SEARCH"
+            android:textColor="#00FFFF"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         WEBVIEW — standard browser surface.
+         30dp top margin keeps content below the status bar notch.
+         layout_above bottomNav so it doesn't overlap the nav bar.
+    ═══════════════════════════════════════════════════════════════ -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomNav"
+        android:layout_marginTop="30dp"
+        android:visibility="gone" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         FOCUS LIST — yellow-on-black semantic content view.
+         Same position as WebView; only one is visible at a time.
+    ═══════════════════════════════════════════════════════════════ -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/focusListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomNav"
+        android:layout_marginTop="30dp"
+        android:background="#000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PROGRESS BAR — slim strip at the top of the screen.
+         Animates while the WebView is loading a page.
+    ═══════════════════════════════════════════════════════════════ -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="30dp"
+        android:indeterminate="true"
+        android:indeterminateTint="#00FFFF"
+        android:visibility="gone" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM NAV — fixed 80dp bar at the bottom of the screen.
+         Hidden on home screen, appears once a page has loaded.
+         Contains two equal-width buttons: HOME and the mode TOGGLE.
+    ═══════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:background="#121212"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:backgroundTint="#1A1A1A"
+            android:text="HOME"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/navToggle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:backgroundTint="#1A1A1A"
+            android:text="FOCUS MODE"
+            android:textColor="#00FFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</RelativeLayout>
