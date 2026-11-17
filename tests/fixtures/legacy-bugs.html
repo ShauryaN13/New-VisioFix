@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Legacy bugs: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+  </head>
+  <body>
+    <header class="site-header headline-bar">
+      <h1>Legacy bugs</h1>
+    </header>
+
+    <div class="expect">
+      <h2>Expected</h2>
+      <ul>
+        <li>Nothing on this page is removed. The counter at the bottom stays the same after VisioFix runs.</li>
+        <li>No fixes: every element here is already accessible. Popup shows "Nothing needed fixing".</li>
+        <li>The decorative divider keeps <code>alt=""</code> (v1 replaced it with "[Image: Needs Description]").</li>
+        <li>The logo link keeps its name from the image's alt (v1 replaced it with "Link").</li>
+      </ul>
+    </div>
+
+    <main>
+      <article class="lead-story">
+        <h2 class="headline">Library adds evening hours</h2>
+        <p class="read-more">This paragraph's class contains "ad-"-like text: read-more. v1 deleted it.</p>
+        <p class="upload-note download-link">Classes with "load", "head", "add": upload-note, download-link.</p>
+        <div class="shadow-card">A card with class "shadow-card" (Jsoup's [class*=ad] matched "shadow").</div>
+        <button class="btn-add-to-cart" type="button">Add to cart</button>
+        <img src="assets/divider.svg" alt="" width="600" height="8" />
+        <p>
+          The opening date was
+          <del>June 1</del>
+          <ins datetime="2026-11-01">June 15</ins>. (v1 deleted every <code>&lt;ins&gt;</code>.)
+        </p>
+        <iframe
+          title="Video tour of the library"
+          src="about:blank"
+          width="480"
+          height="120"
+          style="border: 1px solid #ccc"
+        ></iframe>
+        <div>Text outside any paragraph, which v1's Focus Mode skipped.</div>
+      </article>
+      <p>
+        <a href="/"><img src="assets/logo.svg" alt="Riverside Courier home" width="140" height="32" /></a>
+      </p>
+      <dialog open class="modal-overlay" aria-label="Newsletter">
+        <p>A real dialog with "modal" and "overlay" in its class. v1 deleted these.</p>
+      </dialog>
+      <form action="#">
+        <p>A whole-page form like ASP.NET sites use (v1's Focus Mode deleted forms).</p>
+        <label for="q">Search</label> <input id="q" type="search" />
+      </form>
+    </main>
+
+    <p class="check" id="count"></p>
+    <script>
+      const at = document.querySelectorAll('*').length;
+      const show = () => {
+        const now = document.querySelectorAll('*').length;
+        document.getElementById('count').textContent =
+          `Elements at load: ${at} · now: ${now} ${now === at ? '✓ nothing removed' : '✗ CHANGED'}`;
+      };
+      show();
+      setInterval(show, 1000);
+    </script>
+  </body>
+</html>

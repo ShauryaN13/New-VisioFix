@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Headings: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+  </head>
+  <body>
+    <div class="expect">
+      <p><strong>Expected in the popup, under "can't fix safely" (report only, nothing changes):</strong></p>
+      <ul>
+        <li>No main heading (missing h1). This page's title is a paragraph styled to look like one.</li>
+        <li>A heading level is skipped: h2 → h4 "Related stories".</li>
+        <li>An empty heading: empty h3.</li>
+        <li>Not flagged: going back up from h4 to h2, the role="heading" with aria-level, the hidden h5.</li>
+      </ul>
+    </div>
+    <p style="font-size: 2rem; font-weight: 700">Looks like a title, but isn't a heading</p>
+    <h2>News</h2>
+    <p>Story text.</p>
+    <h4>Related stories</h4>
+    <p>Links.</p>
+    <h3></h3>
+    <h2>Sports</h2>
+    <div role="heading" aria-level="3">Scores</div>
+    <h5 hidden>Hidden heading</h5>
+  </body>
+</html>

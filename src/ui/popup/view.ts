@@ -393,7 +393,7 @@ function issuesPage(report: PageReport, back: () => void): HTMLElement[] {
         h(
           'section',
           { class: 'issue-group' },
-          h('h2', { class: 'group-title' }, 'Labels and roles'),
+          h('h2', { class: 'group-title' }, 'Labels, images and roles'),
           h('ul', { class: 'issue-list', role: 'list' }, otherRows),
         ),
     ),

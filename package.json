@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "design": "vite --config preview/vite.config.ts",
+    "fixtures": "node scripts/serve-fixtures.mjs",
     "icons": "node scripts/build-icons.mjs",
     "fonts": "node scripts/copy-fonts.mjs",
     "postinstall": "wxt prepare"
@@ -25,5 +26,8 @@
     "vitest": "5.1.0",
     "web-ext": "10.8.0",
     "wxt": "0.21.5"
+  },
+  "dependencies": {
+    "dom-accessibility-api": "0.7.1"
   }
 }

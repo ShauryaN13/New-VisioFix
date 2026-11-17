@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Heavy page: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+    <style>
+      body { max-width: none; }
+      #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+      .tile { padding: 8px; background: #fff; border: 1px solid #dde2e8; border-radius: 6px; font-size: 14px; }
+      .tile img { width: 100%; height: 40px; object-fit: cover; display: block; }
+    </style>
+  </head>
+  <body>
+    <h1>Heavy page</h1>
+    <div class="expect">
+      <h2>Expected</h2>
+      <ul>
+        <li>3,000 cards (about 21,000 elements), each with an icon link, an image without alt and an icon button.</li>
+        <li>Every half second, 20 more cards arrive and 50 text spots change, like a busy feed.</li>
+        <li>
+          Scrolling and the frame counter below stay smooth with VisioFix on. Compare with VisioFix paused for this
+          site.
+        </li>
+      </ul>
+    </div>
+    <p class="check" id="fps">Frames per second: measuring…</p>
+    <div id="grid"></div>
+    <script>
+      const grid = document.getElementById('grid');
+      let id = 0;
+      const card = () => {
+        id += 1;
+        const el = document.createElement('div');
+        el.className = 'tile';
+        el.innerHTML =
+          `<img src="assets/photo.svg">` +
+          `<a href="/item/${id}"><svg class="icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/></svg></a> ` +
+          `<span class="t">Item ${id}</span> <button type="button"><svg class="icon" viewBox="0 0 20 20"><path d="M4 10h12"/></svg></button>`;
+        return el;
+      };
+      const batch = (count) => {
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < count; i += 1) frag.append(card());
+        grid.append(frag);
+      };
+      batch(3000);
+      setInterval(() => {
+        batch(20);
+        const spots = grid.querySelectorAll('.t');
+        for (let i = 0; i < 50; i += 1) {
+          const spot = spots[Math.floor(Math.random() * spots.length)];
+          spot.textContent = `Updated ${Date.now() % 10000}`;
+        }
+      }, 500);
+
+      // A simple frame counter: drops show up as a lower number.
+      let frames = 0;
+      let last = performance.now();
+      const tick = (now) => {
+        frames += 1;
+        if (now - last >= 1000) {
+          document.getElementById('fps').textContent = `Frames per second: ${frames}`;
+          frames = 0;
+          last = now;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Unlabeled controls: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+  </head>
+  <body>
+    <h1>Unlabeled controls</h1>
+    <div class="expect">
+      <h2>Expected in the popup</h2>
+      <ul>
+        <li>Fixed: 4 links given a name, 2 form fields connected to their label (6 fixes).</li>
+        <li>Can't fix safely: 4 buttons or fields with no name, 1 label pointing to nothing.</li>
+      </ul>
+    </div>
+
+    <section>
+      <h2>Links</h2>
+      <div class="case">
+        <a href="https://twitter.com/visiofix"><svg class="icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg></a>
+        Icon-only link <code>fixed: aria-label="twitter.com/visiofix"</code>
+      </div>
+      <div class="case">
+        <a href="mailto:help@example.com"><svg class="icon" viewBox="0 0 20 20"><rect x="2" y="5" width="16" height="10" /></svg></a>
+        Icon-only email link <code>fixed: "Email help@example.com"</code>
+      </div>
+      <div class="case">
+        <a href="/next-page"><span aria-hidden="true">→</span></a>
+        Link whose only text is hidden <code>fixed: "localhost/next-page"</code>
+      </div>
+      <div class="case">
+        <a href="https://example.org/help" aria-label=""><svg class="icon" viewBox="0 0 20 20"><path d="M4 4h12v12H4z" /></svg></a>
+        Empty aria-label <code>fixed; "" restored when turned off</code>
+      </div>
+      <div class="case">
+        <a href="#"><svg class="icon" viewBox="0 0 20 20"><path d="M3 10h14" stroke="#000" /></svg></a>
+        Link to "#" <code>reported: no real destination</code>
+      </div>
+      <div class="case"><a href="/story">Read the full story</a> <code>untouched: has text</code></div>
+      <div class="case">
+        <a href="/home"><img src="assets/logo.svg" alt="Home" width="70" height="16" /></a>
+        <code>untouched: named by image alt</code>
+      </div>
+      <div class="case">
+        <a href="/search" title="Search"><svg class="icon" viewBox="0 0 20 20"><circle cx="9" cy="9" r="6" /></svg></a>
+        <code>untouched: title counts as a name</code>
+      </div>
+    </section>
+
+    <section>
+      <h2>Buttons</h2>
+      <div class="case">
+        <button type="button"><svg class="icon" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke="#000" /></svg></button>
+        Icon-only button, no title <code>reported: no reliable source</code>
+      </div>
+      <div class="case">
+        <button type="button" title="Settings"><svg class="icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" /></svg></button>
+        <code>untouched: title</code>
+      </div>
+      <div class="case"><button type="button">×</button> <code>untouched: "×" is a name (v1 overwrote it)</code></div>
+      <div class="case">
+        <button type="button" disabled><svg class="icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" /></svg></button>
+        <code>skipped: disabled</code>
+      </div>
+    </section>
+
+    <section>
+      <h2>Form fields</h2>
+      <div class="case">
+        <label>Email address</label><input type="email" />
+        <code>fixed: aria-labelledby → the label</code>
+      </div>
+      <div class="case">
+        <input type="checkbox" /><label for="remember-typo">Remember me</label>
+        <code>fixed: label's for= points nowhere</code>
+      </div>
+      <div class="case">
+        <label for="phone">Phone</label><input id="fax" /><input id="phone" />
+        <code>first field reported: the label belongs to "phone"</code>
+      </div>
+      <div class="case">
+        <input aria-labelledby="no-such-id" />
+        <code>reported twice: no name, and a label pointing to nothing</code>
+      </div>
+      <div class="case"><input placeholder="Search the site" /> <code>untouched: placeholder</code></div>
+      <div class="case"><label>City <input /></label> <code>untouched: wrapped in its label</code></div>
+    </section>
+  </body>
+</html>

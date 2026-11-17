@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Content that loads later: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+  </head>
+  <body>
+    <h1>Content that loads later</h1>
+    <div class="expect">
+      <h2>Expected</h2>
+      <ul>
+        <li>2 seconds after the page opens, a "Share" icon link appears and gets named within about a second.</li>
+        <li>Each "Add" button adds something; VisioFix repairs it within about a second (watch the popup's count).</li>
+        <li>
+          "Finish the link": the early link gets real text, and VisioFix removes its own label (the site's text wins).
+        </li>
+        <li>"Site sets its own label": the site's label replaces VisioFix's; turning VisioFix off keeps the site's.</li>
+      </ul>
+    </div>
+
+    <p>
+      <button type="button" id="add-link">Add an icon-only link</button>
+      <button type="button" id="add-field">Add a field with a label</button>
+      <button type="button" id="add-image">Add an image in a figure</button>
+    </p>
+    <p>
+      <button type="button" id="finish">Finish the link</button>
+      <button type="button" id="author">Site sets its own label</button>
+    </p>
+
+    <div id="feed"></div>
+
+    <script>
+      const feed = document.getElementById('feed');
+      const icon = '<svg class="icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/></svg>';
+      let n = 0;
+      const add = (html) => {
+        n += 1;
+        const div = document.createElement('div');
+        div.className = 'case';
+        div.innerHTML = html.replaceAll('{n}', n);
+        feed.prepend(div);
+        return div;
+      };
+
+      setTimeout(() => add(`<a id="early" href="https://example.org/share">${icon}</a> Share link (added after 2s)`), 2000);
+      document.getElementById('add-link').onclick = () =>
+        add(`<a href="https://example.org/item-{n}">${icon}</a> Icon link #{n}`);
+      document.getElementById('add-field').onclick = () =>
+        add('<label>Field {n}</label><input> <code>label right before the field</code>');
+      document.getElementById('add-image').onclick = () =>
+        add('<figure><img src="assets/photo.svg" width="160"><figcaption>Photo {n}</figcaption></figure>');
+      document.getElementById('finish').onclick = () => {
+        const link = document.getElementById('early');
+        if (link) link.append(' Share on Example');
+      };
+      document.getElementById('author').onclick = () => {
+        const link = document.getElementById('early');
+        if (link) link.setAttribute('aria-label', 'Share this page');
+      };
+    </script>
+  </body>
+</html>

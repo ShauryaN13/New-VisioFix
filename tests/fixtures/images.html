@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Images: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+    <style>
+      img.photo { width: 320px; height: auto; display: block; }
+      .carousel .slide { display: none; }
+      .carousel .slide.active { display: block; }
+    </style>
+  </head>
+  <body>
+    <h1>Images</h1>
+    <div class="expect">
+      <h2>Expected in the popup</h2>
+      <ul>
+        <li>Fixed: 4 images given a description, 1 link given a name, 1 invisible tracking image hidden.</li>
+        <li>
+          Can't fix safely: 3 images without a description at first. It goes up by 1 when you scroll to the bottom
+          (the lazy image loads), and by 1 more about 4 seconds after the page opens (a script gives another image
+          its source): 5 in the end.
+        </li>
+        <li>No image here ever gets <code>alt="[Image: Needs Description]"</code> or any made-up text.</li>
+      </ul>
+    </div>
+
+    <section>
+      <h2>Left alone</h2>
+      <div class="case"><img src="assets/divider.svg" alt="" width="300" height="8" /> <code>alt="" stays (decorative)</code></div>
+      <div class="case"><img class="photo" src="assets/photo.svg" alt="Bookshelves and a green sofa" /> <code>has alt</code></div>
+    </section>
+
+    <section>
+      <h2>Fixed from a real source</h2>
+      <figure class="case">
+        <img class="photo" src="assets/photo.svg" />
+        <figcaption>The new quiet reading room on the second floor.</figcaption>
+      </figure>
+      <p><code>figure: aria-labelledby → the figcaption</code></p>
+
+      <div class="case">
+        <img class="photo" src="assets/photo.svg" aria-describedby="chart-desc" />
+        <p id="chart-desc">Visitors doubled after evening hours started.</p>
+      </div>
+      <p><code>aria-describedby: its text becomes the alt</code></p>
+
+      <div class="case">
+        <a href="/products/blue-widget" title="Blue widget"><img src="assets/photo.svg" width="160" /></a>
+        <code>alt from the link's title</code>
+      </div>
+
+      <div class="wp-caption case">
+        <img class="photo" src="assets/photo.svg" />
+        <p class="wp-caption-text">Opening night at the library.</p>
+      </div>
+      <p><code>WordPress caption: aria-labelledby → the caption</code></p>
+
+      <div class="case">
+        <a href="https://example.org/shop"><img src="assets/logo.svg" width="70" height="16" /></a>
+        <code>image-only link: the link is named "example.org/shop"</code>
+      </div>
+
+      <div class="case">
+        <img src="assets/pixel.svg" />
+        Tracking pixel (1×1, loaded) <code>alt=""</code>
+      </div>
+    </section>
+
+    <section>
+      <h2>Reported, not changed</h2>
+      <div class="case"><img class="photo" src="assets/photo.svg" /> <code>nothing reliable to describe it</code></div>
+      <figure class="case">
+        <img src="assets/photo.svg" width="150" /><img src="assets/photo.svg" width="150" />
+        <figcaption>Before and after (one caption, two images).</figcaption>
+      </figure>
+      <p><code>2 images sharing one caption: not used, both reported</code></p>
+    </section>
+
+    <section>
+      <h2>Hidden images (must never get alt="")</h2>
+      <div class="carousel">
+        <img class="slide active photo" src="assets/photo.svg" alt="Slide 1: the front entrance" />
+        <img class="slide photo" src="assets/photo.svg" />
+      </div>
+      <p><code>hidden slide (display:none, 800×400): no alt, not counted</code></p>
+      <div class="case">
+        <img id="script-lazy" class="photo" data-src="assets/photo.svg" />
+        <code>no src yet (0×0); a script adds it after 4 seconds, then it's reported</code>
+      </div>
+    </section>
+
+    <div style="height: 3000px" aria-hidden="true"></div>
+    <section>
+      <h2>Lazy-loaded image</h2>
+      <img class="photo" src="assets/photo.svg?slow" loading="lazy" />
+      <p><code>loads only when scrolled near; never alt="", reported once loaded</code></p>
+    </section>
+
+    <script>
+      setTimeout(() => {
+        const img = document.getElementById('script-lazy');
+        img.src = img.dataset.src;
+      }, 4000);
+    </script>
+  </body>
+</html>

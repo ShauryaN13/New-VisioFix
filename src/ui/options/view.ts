@@ -291,11 +291,12 @@ function readAloudSection(model: OptionsModel, handlers: OptionsHandlers): HTMLE
           },
         },
         h('option', { value: '', selected: model.voiceId === null }, 'Automatic'),
-        h(
-          'optgroup',
-          { label: 'On this computer' },
-          local.map((v) => h('option', { value: v.id, selected: v.id === model.voiceId }, v.name)),
-        ),
+        local.length > 0 &&
+          h(
+            'optgroup',
+            { label: 'On this computer' },
+            local.map((v) => h('option', { value: v.id, selected: v.id === model.voiceId }, v.name)),
+          ),
         model.allowOnlineVoices &&
           online.length > 0 &&
           h(
@@ -334,12 +335,14 @@ function readAloudSection(model: OptionsModel, handlers: OptionsHandlers): HTMLE
           handlers.onSpeed(speed);
         },
       }),
-      h(
-        'button',
-        { type: 'button', class: 'btn btn-tonal row-action', onclick: () => handlers.onPlaySample() },
-        icon('play'),
-        'Play a sample',
-      ),
+      // Only when there are voices to play it with.
+      model.voices.length > 0 &&
+        h(
+          'button',
+          { type: 'button', class: 'btn btn-tonal row-action', onclick: () => handlers.onPlaySample() },
+          icon('play'),
+          'Play a sample',
+        ),
     ),
   );
 }

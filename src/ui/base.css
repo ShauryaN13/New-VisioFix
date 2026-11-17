@@ -22,6 +22,9 @@ html {
 body {
   margin: 0;
   background: var(--bg);
+  /* Chrome adds its own stylesheet to extension pages that sets the body to
+     "Segoe UI" at 75% size. Take font, size and line height from <html> instead. */
+  font: inherit;
 }
 
 h1,

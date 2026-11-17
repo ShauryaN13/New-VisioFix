@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ARIA: VisioFix test page</title>
+    <link rel="stylesheet" href="fixtures.css" />
+    <style>
+      .card { display: inline-block; width: 220px; margin: 0 1rem 1rem 0; padding: 0.75rem; background: #fff; border: 1px solid #dde2e8; border-radius: 8px; }
+      .card img { width: 100%; height: auto; display: block; }
+    </style>
+  </head>
+  <body>
+    <h1>ARIA</h1>
+    <div class="expect">
+      <h2>Expected in the popup</h2>
+      <ul>
+        <li>Fixed: 2 duplicate links taken out of Tab order (the image links in the two cards).</li>
+        <li>
+          Can't fix safely: 2 roles the browser ignores, 2 labels that point to nothing, 2 items you can Tab to but
+          can't hear.
+        </li>
+        <li>Roles and aria-hidden values on this page are never changed.</li>
+      </ul>
+    </div>
+
+    <section>
+      <h2>Invalid roles (reported, browsers already ignore them)</h2>
+      <div class="case"><div role="btn" tabindex="0">Save</div> <code>role="btn"</code></div>
+      <div class="case"><div role="nav">Menu</div> <code>role="nav"</code></div>
+      <div class="case"><div role="switch checkbox" aria-checked="false" tabindex="0">Dark mode</div> <code>valid: fallback list</code></div>
+      <div class="case"><aside role="doc-tip">A tip.</aside> <code>valid: DPUB role</code></div>
+    </section>
+
+    <section>
+      <h2>References to missing ids (reported)</h2>
+      <div class="case"><button type="button" aria-describedby="hint-that-is-gone">Send</button> <code>aria-describedby → missing</code></div>
+      <div class="case"><div role="region" aria-labelledby="title-removed">Region</div> <code>aria-labelledby → missing</code></div>
+    </section>
+
+    <section>
+      <h2>aria-hidden on focusable elements</h2>
+      <div class="card">
+        <a href="/products/1" aria-hidden="true"><img src="assets/photo.svg" alt="" /></a>
+        <h3><a href="/products/1">Blue widget</a></h3>
+      </div>
+      <div class="card">
+        <a href="/products/2" aria-hidden="true"><img src="assets/photo.svg" alt="" /></a>
+        <h3><a href="/products/2">Green widget</a></h3>
+      </div>
+      <p><code>hidden image links duplicate the title links: tabindex="-1" added</code></p>
+
+      <div aria-hidden="true" class="case">
+        <button type="button">Add to cart</button>
+        <code>unique visible button inside aria-hidden: reported only</code>
+      </div>
+      <div class="case">
+        <a href="/story" aria-hidden="true" tabindex="0"><img src="assets/logo.svg" alt="" width="70" height="16" /></a>
+        <a href="/story">The story</a>
+        <code>author set tabindex="0": reported, not overridden</code>
+      </div>
+    </section>
+  </body>
+</html>

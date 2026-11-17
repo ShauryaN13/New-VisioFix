@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>VisioFix test pages</title>
+    <link rel="stylesheet" href="fixtures.css" />
+  </head>
+  <body>
+    <h1>VisioFix test pages</h1>
+    <p>
+      Each page has known accessibility bugs and lists what VisioFix should do with them. Open the VisioFix popup on
+      a page to compare its counts with the expected ones. To see a change, right-click an element and choose
+      Inspect: everything VisioFix changed carries a <code>data-visiofix</code> attribute naming what it set.
+    </p>
+    <ul>
+      <li><a href="legacy-bugs.html">Legacy bugs</a>: things the Android version broke. Nothing may be removed.</li>
+      <li><a href="controls.html">Unlabeled controls</a>: links, buttons and form fields with no name.</li>
+      <li><a href="images.html">Images</a>: missing alt text, captions, tracking pixels, lazy and hidden images.</li>
+      <li><a href="aria.html">ARIA</a>: invalid roles, broken references, aria-hidden on focusable elements.</li>
+      <li><a href="headings.html">Headings</a>: missing h1, skipped level, empty heading (report only).</li>
+      <li><a href="dynamic.html">Content that loads later</a>: VisioFix keeps up with changes.</li>
+      <li><a href="stress.html">Heavy page</a>: 3,000 cards plus constant changes, for checking speed.</li>
+    </ul>
+  </body>
+</html>

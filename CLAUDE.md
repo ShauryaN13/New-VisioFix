@@ -76,7 +76,7 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm run design` | Design preview (dev only) at http://localhost:5180: every screen with sample data |
 | `npm run icons` | Renders the icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png` |
 | `npm run fonts` | Copies the used woff2 files to `public/fonts/` and the OFL to `public/licenses/` |
-| `npm run fixtures` | (Phase 3) serves `tests/fixtures/` on localhost; tiny Node script, no dependency |
+| `npm run fixtures` | Serves `tests/fixtures/` at http://localhost:5181 (tiny Node script, no dependency) |
 
 **Dependencies** (✓ = installed)
 | Package | Ships? | Reason |
@@ -107,37 +107,50 @@ No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prett
 
 ## Approved design
 
-### 1. Repairs (live page, main document)
-**Engine**
-- Content script at `document_idle`, `all_frames: false`.
-- First scan in idle-time slices (requestIdleCallback, small budget) so heavy pages don't freeze.
-- MutationObserver queues added nodes; processed in batches, debounced ~250ms with ~1s max wait.
-  Re-check a processed node only when a relevant attribute changes. Filter out our own changes.
-- Cheap pre-filter: skip elements that already have text or `aria-label` before running the full
-  accessible-name computation (only causes missed repairs, never wrong ones).
-- Change log: element → {attribute, value we set}; elements tagged `data-visiofix-*`.
+### 1. Repairs (live page, main document) — built in Phase 3
+**Engine** (`src/repair/engine.ts`)
+- Content script (`src/entrypoints/content/index.ts`) at `document_idle`, `all_frames: false`.
+  Starts the engine when repairs are on for the host, `stop()` (undo everything) when paused,
+  globally off, or when the extension is reloaded/updated/removed (`ctx.onInvalidated`).
+- Work runs in ~8ms slices via requestIdleCallback; the clock is checked every 8 elements.
+  Fixes decided during a slice are written all at once at its end, so style reads and DOM writes
+  never interleave (this cut the stress page from 4.3s to 0.3s of main-thread time).
+- MutationObserver (childList + a short attribute list incl. `src`, `aria-hidden`, `hidden`) feeds
+  a queue, debounced 250ms with 1s max wait. Each element is checked once (WeakSet); it's
+  rechecked when its attributes change or content changes inside a link/button/label/figure.
+  Changes to aria-hidden/hidden/inert force a recheck of the whole subtree.
+- VisioFix's own writes go through `write()`: queued page records are taken first, then whatever
+  the observer records is dropped. If the site sets an attribute VisioFix set, the site wins
+  (`forget`), and undo leaves it.
+- `ChangeLog` (`src/repair/changes.ts`): every change has a target, an owner (the element whose
+  check produced it; e.g. a field owns the id added to its label), the previous value, and a count
+  kind. Undo only removes a value that's still ours. Elements are tagged
+  `data-visiofix="attr attr"`. A label id another VisioFix-labelled field still uses is handed over,
+  not removed.
+- Names: `guessName()` answers named/unnamed/unsure without reading styles; the full
+  dom-accessibility-api computation runs only for "unsure" (aria-labelledby, embedded controls).
+- `flush()` is for tests only (it can block on heavy pages); the status message never flushes.
 
-**a. Unlabeled controls** (buttons, links, form fields with no accessible name per
-dom-accessibility-api). Only real sources:
-- Form fields: an unassociated `<label>` immediately before the field, or a `<label for>` with a
-  broken id and exactly one candidate field → `aria-labelledby` to the author's label (stays in sync).
-- Links: cleaned destination, e.g. `twitter.com/visiofix` (no protocol, www, query, hash).
-  Skip `#` and `javascript:` hrefs.
-- `title`/`placeholder` already count as names in browsers, so those elements aren't unlabeled.
-- Never "Button"/"Link" fallbacks. Icon-only buttons with no source stay unnamed and are reported.
+**a. Unlabeled controls** (buttons, links, form fields with no accessible name). Only real sources:
+- Form fields: a `<label>` that is the field's previous or next sibling and isn't connected to any
+  control (`label.control === null`: no `for`, or `for` pointing nowhere) → `aria-labelledby`.
+- Links: destination as host + path + meaningful query (tracking params like `utm_*`, `fbclid`
+  stripped), e.g. `twitter.com/visiofix`, `en.wikipedia.org/wiki/X?action=edit`,
+  `Email help@example.com`, `Call …`. 60-char cap. Skip `#`, same-page jumps and `javascript:`.
+- `aria-label=""` counts as missing (previous "" restored on undo); an author's aria-labelledby is
+  never overridden, even if broken.
+- `title`/`placeholder` already count as names. Never "Button"/"Link" fallbacks. Icon-only buttons
+  with no source are reported (only if rendered).
 
-**b. Images**: only `<img>` with no `alt` attribute and no computed name. Never touch `alt=""`.
-- In a `<figure>` with `<figcaption>` → `aria-labelledby` to the caption (no text copying).
-- Else `aria-describedby` text, a parent link's `title`, or a known CMS caption class matched as a
-  whole class token (`wp-caption-text`, `wp-element-caption`), never a substring.
-- Image-only links: name the link (from its title or destination); the image is then covered.
-- Nothing reliable: leave it, count it as "needs a description". No placeholder text.
-- Exception: `alt=""` for tracking pixels/spacers, **only after the image has loaded**
-  (`img.complete && naturalWidth > 0`) and only when `naturalWidth <= 2 && naturalHeight <= 2`.
-  **Never use rendered size**: lazy-loaded images that haven't loaded yet and hidden images
-  (carousel slides, `display:none`) also measure 0×0, and `alt=""` would hide real images.
-  Images that haven't loaded yet are re-checked on their `load` event.
-  Fixtures must cover a lazy-loaded image and a hidden image.
+**b. Images**: only `<img>` with no `alt` attribute, a source, and no other name. Never touch `alt=""`.
+- In a `<figure>` with one image and a `<figcaption>` → `aria-labelledby` to the caption.
+- Else `aria-describedby` text → alt, a parent link's `title` → alt, or WordPress
+  `.wp-caption` / `.wp-caption-text` (whole class tokens) → `aria-labelledby`.
+- Image-only links: the link is named; the image inside a link with an aria-label is covered.
+- Nothing reliable: left alone, counted as "needs a description" if rendered. No placeholder.
+- `alt=""` for tracking pixels/spacers **only after load** (`complete && naturalWidth > 0`) and
+  only when natural size ≤ 2×2. **Never rendered size** (lazy/hidden images measure 0×0).
+  Unloaded images wait for `load`; images with no `src` yet are skipped until `src` is set.
 
 **c. ARIA**
 - Invalid role values and `aria-labelledby`/`aria-describedby` pointing to missing IDs:
@@ -277,24 +290,24 @@ Also found in review:
 14. v2 reads one tapped item and stops; highlight only moves on tap.
 15. Both force a US English voice regardless of page language.
 
-## File structure (planned)
+## File structure
 ```
 src/
-  entrypoints/  background.ts · content.ts (→ content/ later) · popup/ · options/ · preview/ (dev-only)
-  repair/       engine.ts · changes.ts · names.ts · controls.ts · images.ts · aria.ts · headings.ts
+  entrypoints/  background.ts · content/index.ts · popup/ · options/ (open_in_tab)
+  repair/       engine.ts · rules.ts · changes.ts · a11y.ts · link-names.ts · roles.ts · headings.ts
   focus/        model.ts · view.ts · focus.css (Phase 2) · overlay.ts · extract.ts · build.ts
   speech/       sentences.ts · player.ts · highlight.ts
-  shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts
+  shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts · commands.ts
   ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
   assets/       brand.ts (the icon as data)
 preview/        design preview (dev only): index.html · frame.html · sample-data.ts
-scripts/        build-icons.mjs · copy-fonts.mjs
+scripts/        build-icons.mjs · copy-fonts.mjs · serve-fixtures.mjs
 public/fonts/   Atkinson Hyperlegible Next woff2 files
 public/licenses/ OFL (font) and ISC (Lucide) license texts
-public/icon/    16, 32, 48, 128 PNGs (from a detailed SVG and a simplified small-size SVG)
-tests/unit/     *.test.ts
-tests/fixtures/ legacy-bugs, controls, images (incl. lazy-loaded + hidden), aria, headings,
-                dynamic, article, not-article
+public/icon/    16, 32, 48, 128 PNGs (from src/assets/brand.ts)
+tests/unit/     *.test.ts; repair/ has the engine and rule tests
+tests/fixtures/ index, legacy-bugs, controls, images (lazy, hidden, script-set src), aria, headings,
+                dynamic, stress (Phase 4 adds article, not-article)
 store/          listing.md · permissions.md · screenshots/
 legacy/         reference only, excluded from the build
 ```
@@ -318,7 +331,21 @@ legacy/         reference only, excluded from the build
 - Shadow DOM is out of scope, and Reddit's current site is largely web components.
 - Readability works poorly on home pages, feeds and web apps; the fallback is rough.
 - Voice quality depends on the OS; some systems have few local voices.
-- Gmail mutates constantly: the main performance risk (measure in Phase 3).
+- Gmail mutates constantly: the main performance risk. Not measured (needs a signed-in account);
+  the stress fixture (21k elements + constant changes) costs ~0.3s of main thread over 6s, with
+  no slice over ~10ms. Wikipedia, BBC News, YouTube: under 41ms total, slices under 9ms
+  (headless, signed out; Reddit served a near-empty page to headless Chrome).
+- Hidden content (menus, dialogs) that becomes visible through a class change isn't re-checked
+  (class isn't observed, for speed). Links in it are still named if they were in the page at scan
+  time; reports may undercount until the next change.
+
+## Chrome gotchas found while building
+- `chrome.commands` is undefined when the manifest declares no commands: guard it
+  (`src/shared/commands.ts`). It made the popup blank in Phase 3 until fixed.
+- Chrome adds a stylesheet to extension pages that sets `body` to "Segoe UI" 75%: `base.css` sets
+  `body { font: inherit }`. The design preview (a normal page) can't show this; check real pages.
+- `action.openPopup()` from the service worker works in headless Chrome, which allows
+  screenshotting the real popup over a test page.
 
 ## Progress
 - **Phase 1: done (2026-11-16).** Legacy v1 extracted to `legacy/android-v1/` (zip deleted),
@@ -329,13 +356,13 @@ legacy/         reference only, excluded from the build
   production build in headless Chrome 157: service worker starts, content script answers the
   popup, popup renders, no console errors. Not yet tried: `npm run dev` (opens a Chrome window).
   Pushed to GitHub.
-- **Phase 2: built (2026-11-16), waiting for the user's approval of the look.** Design system,
+- **Phase 2: built (2026-11-16), revised after review (below).** Design system,
   icon (16/32/48/128 PNGs), popup/Focus Mode/settings views with sample data, design preview
   (`npm run design`), contrast tests (104 tests pass). The toolbar popup in the extension is still
   the Phase 1 placeholder; the real popup switches to the new view when it's wired in Phase 3.
   The contrast test caught Focus Mode light's Play button at 6.2:1 and it was darkened to #1546B5.
   Pushed.
-- **Phase 2 revision 2: built (2026-11-16), waiting for the user's review and icon choice.**
+- **Phase 2 revision 2: done (2026-11-16).**
   User feedback applied: larger type, one card level, navy brand, Lucide icons, motion,
   popup restructure (status, tiles, one number, can't-fix details page), Focus Mode toolbar
   with "Aa" panel + progress + reading time, Chrome-style settings, three icon concepts.
@@ -343,3 +370,15 @@ legacy/         reference only, excluded from the build
   Fixed the horizontal-scrollbar bug (fixed-width body + frame scrollbars; now fluid content,
   inner scroll area, ResizeObserver-sized frames) and native controls using the wrong color
   scheme in Focus Mode. 145 tests pass.
+- **Phase 3: done (2026-11-16).** Repair engine with change log, undo, own-change filtering,
+  idle-time slicing and batched writes; rules for controls, images, ARIA and headings;
+  settings in storage.local (repairsOn, offSites, focus and speech prefs); content script with
+  live port updates to the popup; real popup (status, switch, counts, can't-fix page) and real
+  settings page (global switch, paused sites, theme, text size, speed, online voices).
+  Fixtures + `npm run fixtures`. 208 unit tests. Verified in headless Chrome 157: every fixture's
+  counts match its expected list; pausing a site removes every change (empty aria-label restored)
+  and resuming re-applies; content added later is repaired and VisioFix's label is removed once
+  the site adds text. Found and fixed in real-browser testing: popup blank without
+  chrome.commands, popup fonts overridden by Chrome's extension stylesheet, link names dropping
+  meaningful queries (Wikipedia "?action=edit"), images whose src is set later never rechecked.
+  Focus Mode and Read aloud tiles do nothing yet (Phases 4 and 5).

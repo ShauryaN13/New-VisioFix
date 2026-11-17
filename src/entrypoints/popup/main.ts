@@ -1,44 +1,138 @@
-import './style.css';
-import type { PingMessage, PingReply } from '@/shared/messages';
+import '@/ui/fonts.css';
+import '@/ui/tokens.css';
+import '@/ui/base.css';
+import '@/ui/popup/popup.css';
+import type { Browser } from 'wxt/browser';
+import { getShortcuts } from '@/shared/commands';
+import { REPORT_PORT, type StatusMessage, type StatusReply } from '@/shared/messages';
+import type { PageReport } from '@/shared/report';
+import { offSitesItem, repairsOnItem, withSite } from '@/shared/settings';
 import { getSiteKey } from '@/shared/site';
+import { type PopupModel, renderPopup } from '@/ui/popup/view';
 
 /**
- * Phase 1 popup: confirms the content script is running on the current tab.
- * The real popup is designed in Phase 2 and wired up in Phases 3 and 6.
+ * The toolbar popup. Reads the settings, asks the page's content script for
+ * its report, and keeps both up to date while the popup is open.
+ * Focus Mode and Read aloud are wired up in Phases 4 and 5.
  */
 
-const statusEl = document.getElementById('status') as HTMLParagraphElement;
-const reloadButton = document.getElementById('reload') as HTMLButtonElement;
+const root = document.getElementById('app') as HTMLElement;
 
-async function checkCurrentTab(): Promise<void> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  // tab.url is only visible for pages we have host access to (http/https),
-  // so browser pages like chrome://extensions come back without a URL.
-  const host = getSiteKey(tab?.url);
-  const tabId = tab?.id;
+interface State {
+  tabId: number | null;
+  host: string | null;
+  /** false = no content script answered (tab opened before install/update). */
+  connected: boolean;
+  repairsOn: boolean;
+  offSites: string[];
+  report: PageReport | null;
+  shortcuts: PopupModel['shortcuts'];
+}
 
-  if (tabId === undefined || !host) {
-    statusEl.textContent = "VisioFix can't run on this page.";
-    return;
-  }
+const state: State = {
+  tabId: null,
+  host: null,
+  connected: false,
+  repairsOn: true,
+  offSites: [],
+  report: null,
+  shortcuts: { focusMode: null, readAloud: null },
+};
 
-  try {
-    const ping: PingMessage = { type: 'visiofix:ping' };
-    const reply = (await browser.tabs.sendMessage(tabId, ping)) as PingReply | undefined;
-    if (reply?.ok) {
-      statusEl.textContent = `Running on ${host}.`;
-      return;
-    }
-  } catch {
-    // No content script in this tab: it was opened before VisioFix was installed or reloaded.
-  }
+function model(): PopupModel {
+  const { host } = state;
+  if (!host || state.tabId === null) return { view: { kind: 'unsupported' }, shortcuts: state.shortcuts };
+  if (!state.connected) return { view: { kind: 'needs-reload', host }, shortcuts: state.shortcuts };
+  if (!state.repairsOn) return { view: { kind: 'off-everywhere', host }, shortcuts: state.shortcuts };
+  const repairsOn = !state.offSites.includes(host);
+  return {
+    view: { kind: 'ready', host, repairsOn, report: repairsOn ? state.report : null },
+    shortcuts: state.shortcuts,
+  };
+}
 
-  statusEl.textContent = 'Reload this page to start VisioFix here.';
-  reloadButton.hidden = false;
-  reloadButton.addEventListener('click', async () => {
-    await browser.tabs.reload(tabId);
-    window.close();
+function render(): void {
+  renderPopup(root, model(), {
+    onToggleSite: (on) => {
+      if (!state.host) return;
+      state.offSites = withSite(state.offSites, state.host, on);
+      if (!on) state.report = null;
+      render();
+      void offSitesItem.setValue(state.offSites);
+    },
+    onTurnOnEverywhere: () => {
+      state.repairsOn = true;
+      render();
+      void repairsOnItem.setValue(true);
+    },
+    onFocusMode: () => {
+      // Phase 4.
+    },
+    onReadAloud: () => {
+      // Phase 5.
+    },
+    onReload: () => {
+      if (state.tabId !== null) void browser.tabs.reload(state.tabId);
+      window.close();
+    },
+    onOpenSettings: () => {
+      void browser.runtime.openOptionsPage();
+      window.close();
+    },
   });
 }
 
-void checkCurrentTab();
+async function loadShortcuts(): Promise<PopupModel['shortcuts']> {
+  const commands = await getShortcuts();
+  const find = (name: string) => commands.find((c) => c.name === name)?.shortcut ?? null;
+  return { focusMode: find('toggle-focus-mode'), readAloud: find('play-pause') };
+}
+
+async function init(): Promise<void> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  // tab.url is only visible for pages VisioFix has access to (http/https).
+  state.host = getSiteKey(tab?.url);
+  state.tabId = tab?.id ?? null;
+  [state.repairsOn, state.offSites, state.shortcuts] = await Promise.all([
+    repairsOnItem.getValue(),
+    offSitesItem.getValue(),
+    loadShortcuts(),
+  ]);
+
+  if (state.host && state.tabId !== null) {
+    try {
+      const message: StatusMessage = { type: 'visiofix:status' };
+      const reply = (await browser.tabs.sendMessage(state.tabId, message)) as StatusReply | undefined;
+      if (reply?.ok) {
+        state.connected = true;
+        state.report = reply.report;
+      }
+    } catch {
+      // No content script in this tab.
+    }
+  }
+  render();
+
+  if (state.connected && state.tabId !== null) {
+    const port: Browser.runtime.Port = browser.tabs.connect(state.tabId, { name: REPORT_PORT });
+    port.onMessage.addListener((message: StatusReply) => {
+      state.report = message.report;
+      render();
+    });
+  }
+
+  repairsOnItem.watch((value) => {
+    state.repairsOn = value;
+    render();
+  });
+  offSitesItem.watch((value) => {
+    state.offSites = value;
+    render();
+  });
+}
+
+// If anything unexpected fails, still show a popup (never a blank box).
+init().catch((error: unknown) => {
+  console.error('VisioFix popup:', error);
+  render();
+});
