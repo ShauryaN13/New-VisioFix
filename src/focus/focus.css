@@ -11,6 +11,7 @@
 /* ---------- Themes ---------- */
 
 .vf-focus[data-theme='contrast'] {
+  color-scheme: dark; /* native controls and scrollbars match the theme */
   /* VisioFix's signature from the original app */
   --f-bg: #000000;
   --f-text: #ffffff;
@@ -19,19 +20,24 @@
   --f-h3: #ffffff;
   --f-link: #00ffff;
   --f-muted: #d9d9d9;
-  --f-rule: #ffffff;
   --f-quote-bar: #ffd700;
   --f-code-bg: #1a1a1a;
   --f-toolbar-bg: #000000;
-  --f-toolbar-line: #ffff00;
   --f-control-text: #ffffff;
   --f-control-border: #ffffff;
-  --f-control-bg: #000000;
+  --f-round-bg: #000000;
+  --f-round-edge: #ffffff;
   --f-control-hover: #262626;
   --f-primary-bg: #ffff00;
   --f-primary-text: #000000;
   --f-primary-hover: #ffff80;
   --f-focus: #00ffff;
+  --f-progress: #ffff00;
+  --f-progress-track: #3d3d3d;
+  --f-panel-bg: #000000;
+  --f-panel-edge: #ffffff;
+  --f-panel-shadow: 0 0 0 transparent; /* not "none": it sits in a shadow list */
+  --f-range: #ffff00;
   --f-hl-bg: #ffff00;
   --f-hl-text: #000000;
   --f-hl-line: #000000;
@@ -39,6 +45,7 @@
 }
 
 .vf-focus[data-theme='dark'] {
+  color-scheme: dark;
   --f-bg: #15171b;
   --f-text: #e9ebef;
   --f-h1: #ffffff;
@@ -46,19 +53,24 @@
   --f-h3: #f3f4f6;
   --f-link: #9cc2ff;
   --f-muted: #b8bec9;
-  --f-rule: #3a404a;
   --f-quote-bar: #9cc2ff;
   --f-code-bg: #20242b;
-  --f-toolbar-bg: #1c1f25;
-  --f-toolbar-line: #363c46;
+  --f-toolbar-bg: #1b1e24;
   --f-control-text: #e9ebef;
   --f-control-border: #8a93a3;
-  --f-control-bg: #1c1f25;
-  --f-control-hover: #2a2f37;
+  --f-round-bg: #2a2f38;
+  --f-round-edge: transparent;
+  --f-control-hover: #353b46;
   --f-primary-bg: #9cc2ff;
   --f-primary-text: #0b1530;
   --f-primary-hover: #b8d4ff;
   --f-focus: #ffd400;
+  --f-progress: #9cc2ff;
+  --f-progress-track: #2c313a;
+  --f-panel-bg: #1f232a;
+  --f-panel-edge: #3a404a;
+  --f-panel-shadow: 0 16px 40px rgb(0 0 0 / 50%);
+  --f-range: #9cc2ff;
   --f-hl-bg: #33456e;
   --f-hl-text: #ffffff;
   --f-hl-line: #ffd400;
@@ -66,6 +78,7 @@
 }
 
 .vf-focus[data-theme='light'] {
+  color-scheme: light;
   /* Soft off-white, not pure white, to reduce glare */
   --f-bg: #fbf8f1;
   --f-text: #1d1c1a;
@@ -74,21 +87,26 @@
   --f-h3: #121110;
   --f-link: #0b4aa8;
   --f-muted: #4f4b43;
-  --f-rule: #d6d0c2;
   --f-quote-bar: #0b4aa8;
   --f-code-bg: #efe9dc;
-  --f-toolbar-bg: #f1ece1;
-  --f-toolbar-line: #d6d0c2;
+  --f-toolbar-bg: #f3eee3;
   --f-control-text: #1d1c1a;
   --f-control-border: #6f6a60;
-  --f-control-bg: #fbf8f1;
-  --f-control-hover: #e6dfd0;
-  /* A shade darker than the popup's accent: white on #1A56DB is 6.2:1 (AA),
+  --f-round-bg: #e6dfd0;
+  --f-round-edge: transparent;
+  --f-control-hover: #dcd3c1;
+  /* A shade darker than the popup's accent: white on #1A56DB is 6.2:1 (AA);
      Focus Mode needs AAA (7:1). #1546B5 gives 8.2:1. */
   --f-primary-bg: #1546b5;
   --f-primary-text: #ffffff;
   --f-primary-hover: #103a96;
   --f-focus: #1546b5;
+  --f-progress: #1546b5;
+  --f-progress-track: #e2dbcc;
+  --f-panel-bg: #fffdf8;
+  --f-panel-edge: #d6d0c2;
+  --f-panel-shadow: 0 16px 40px rgb(60 48 24 / 18%);
+  --f-range: #1546b5;
   --f-hl-bg: #ffe27a;
   --f-hl-text: #1d1c1a;
   --f-hl-line: #1d1c1a;
@@ -99,6 +117,8 @@
 
 .vf-focus {
   --vf-font: 'VisioFix Atkinson', 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vf-ease: cubic-bezier(0.2, 0, 0, 1);
+  --vf-duration: 140ms;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -122,98 +142,261 @@
   outline-offset: 2px;
 }
 
-.vf-focus svg {
+.vf-focus .icon {
   flex: none;
+  width: 22px;
+  height: 22px;
 }
 
 /* ---------- Toolbar (fixed px sizes: doesn't grow with text size) ---------- */
 
 .vf-toolbar {
   flex: none;
-  display: flex;
-  flex-wrap: wrap;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 12px 20px;
-  padding: 10px 20px;
+  gap: 12px;
+  min-height: 68px;
+  padding: 8px 16px;
   background: var(--f-toolbar-bg);
-  border-bottom: 2px solid var(--f-toolbar-line);
   font-size: 16px;
 }
 
-.vf-brand {
-  display: inline-flex;
+.vf-tb-start {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+}
+.vf-mark {
+  flex: none;
+  border-radius: 7px;
+}
+.vf-site {
+  overflow: hidden;
   font-weight: 700;
-  font-size: 17px;
-  margin-inline-end: auto;
-}
-.vf-logo {
-  width: 28px;
-  height: 28px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.vf-group {
-  display: inline-flex;
+.vf-tb-center {
+  display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.vf-tb-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
-.vf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border: 2px solid var(--f-control-border);
-  border-radius: 10px;
-  background: var(--f-control-bg);
+/* Round controls: previous, next and "Aa" */
+.vf-round {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--f-round-bg);
+  box-shadow: inset 0 0 0 2px var(--f-round-edge);
   color: var(--f-control-text);
   font: inherit;
   font-weight: 700;
-  line-height: 1.2;
   cursor: pointer;
+  transition:
+    background-color var(--vf-duration) var(--vf-ease),
+    transform var(--vf-duration) var(--vf-ease);
 }
-.vf-btn:hover {
+.vf-round:hover {
   background: var(--f-control-hover);
 }
-.vf-btn svg {
-  width: 22px;
-  height: 22px;
+.vf-round:active {
+  transform: scale(0.94);
 }
-.vf-icon-btn {
-  padding: 8px;
+.vf-aa {
+  font-size: 17px;
+  letter-spacing: 0.01em;
+}
+.vf-aa[aria-expanded='true'] {
+  background: var(--f-control-hover);
+  box-shadow: inset 0 0 0 2px var(--f-control-border);
 }
 
-.vf-btn-primary {
-  min-width: 108px;
+/* Play: larger, circular, primary */
+.vf-play {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
   background: var(--f-primary-bg);
-  border-color: var(--f-primary-bg);
   color: var(--f-primary-text);
+  cursor: pointer;
+  transition:
+    background-color var(--vf-duration) var(--vf-ease),
+    transform var(--vf-duration) var(--vf-ease);
 }
-.vf-btn-primary:hover {
+.vf-play:hover {
   background: var(--f-primary-hover);
-  border-color: var(--f-primary-hover);
+}
+.vf-play:active {
+  transform: scale(0.95);
+}
+.vf-play .icon {
+  width: 24px;
+  height: 24px;
+}
+/* The play triangle's visual center sits left of its box; nudge it. */
+.vf-play:not(.is-playing) .icon {
+  margin-left: 3px;
 }
 
-.vf-select {
+.vf-close {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
-}
-.vf-select select {
+  gap: 6px;
   min-height: 44px;
-  padding: 8px 10px;
-  border: 2px solid var(--f-control-border);
-  border-radius: 10px;
-  background: var(--f-control-bg);
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--f-control-border);
   color: var(--f-control-text);
   font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--vf-duration) var(--vf-ease),
+    transform var(--vf-duration) var(--vf-ease);
+}
+.vf-close:hover {
+  background: var(--f-control-hover);
+}
+.vf-close:active {
+  transform: scale(0.97);
+}
+
+/* ---------- "Aa" panel ---------- */
+
+/* Positioned against the toolbar (position: relative), under its right end. */
+.vf-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  gap: 18px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--f-panel-bg);
+  box-shadow:
+    inset 0 0 0 2px var(--f-panel-edge),
+    var(--f-panel-shadow);
+  color: var(--f-control-text);
+  font-size: 16px;
+}
+.vf-panel[hidden] {
+  display: none;
+}
+.vf-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.vf-field legend,
+.vf-field label {
+  font-weight: 700;
+}
+.vf-field legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+.vf-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.vf-value {
+  font-variant-numeric: tabular-nums;
+}
+.vf-panel input[type='range'] {
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  accent-color: var(--f-range);
+  cursor: pointer;
+}
+.vf-themes {
+  display: grid;
+  gap: 6px;
+}
+.vf-theme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 8px;
+  border-radius: 10px;
   font-weight: 400;
   cursor: pointer;
+  transition: background-color var(--vf-duration) var(--vf-ease);
+}
+.vf-theme:hover {
+  background: var(--f-control-hover);
+}
+.vf-theme input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--f-range);
+}
+.vf-swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.vf-swatch[data-swatch='contrast'] {
+  background: #000000;
+  color: #ffff00;
+  box-shadow: inset 0 0 0 1px #ffffff;
+}
+.vf-swatch[data-swatch='dark'] {
+  background: #15171b;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px #5b6270;
+}
+.vf-swatch[data-swatch='light'] {
+  background: #fbf8f1;
+  color: #121110;
+  box-shadow: inset 0 0 0 1px #b9b2a3;
+}
+
+/* ---------- Progress ---------- */
+
+.vf-progress {
+  flex: none;
+  height: 4px;
+  background: var(--f-progress-track);
+}
+.vf-progress-fill {
+  height: 100%;
+  background: var(--f-progress);
+  transform-origin: left center;
 }
 
 /* ---------- Article (em sizes, scaled by --vf-text-size) ---------- */
@@ -231,10 +414,6 @@
   font-size: var(--vf-text-size, 22px);
   line-height: 1.6;
   overflow-wrap: break-word;
-}
-
-.vf-article > * + * {
-  margin-top: 0;
 }
 
 .vf-meta {
@@ -343,7 +522,7 @@
   border-radius: 0.5em;
   font-size: 0.85em;
 }
-.vf-notice svg {
+.vf-notice .icon {
   width: 1.3em;
   height: 1.3em;
   margin-top: 0.1em;
@@ -385,15 +564,16 @@
   justify-content: center;
   width: 1.5em;
   height: 1.5em;
-  border: 2px solid var(--f-control-border);
   border-radius: 50%;
-  background: var(--f-control-bg);
+  background: var(--f-round-bg);
+  box-shadow: inset 0 0 0 2px var(--f-control-border);
   color: var(--f-control-text);
   cursor: pointer;
 }
-.vf-play-here svg {
-  width: 0.8em;
-  height: 0.8em;
+.vf-play-here .icon {
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.08em;
 }
 .vf-article > p:hover > .vf-play-here,
 .vf-article > p.is-hover > .vf-play-here {
@@ -401,15 +581,15 @@
 }
 
 /* ---------- Narrow windows ----------
-   Visible labels for Speed, Theme and Close, and the "Focus Mode" title, become
-   visually hidden (screen readers still get them), so the toolbar fits in two rows. */
+   The site name and the word "Close" become visually hidden (screen readers
+   still get them) so the toolbar stays on one row down to about 360px. */
 @media (max-width: 640px) {
   .vf-toolbar {
-    gap: 10px 12px;
+    gap: 8px;
     padding: 8px 12px;
   }
-  .vf-brand {
-    margin-inline-end: 0;
+  .vf-tb-center {
+    gap: 8px;
   }
   .vf-hide-narrow {
     position: absolute;
@@ -423,10 +603,9 @@
     border: 0;
   }
   .vf-close {
-    padding: 8px;
-  }
-  .vf-btn-primary {
-    min-width: 96px;
+    width: 44px;
+    padding: 0;
+    justify-content: center;
   }
   .vf-article {
     padding: 1.2em 1em 3em;
@@ -437,14 +616,31 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vf-focus * {
+  .vf-focus *,
+  .vf-focus *::before,
+  .vf-focus *::after {
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
   }
+  .vf-round:active,
+  .vf-play:active,
+  .vf-close:active {
+    transform: none;
+  }
 }
 
 @media (forced-colors: active) {
+  .vf-round,
+  .vf-play,
+  .vf-close,
+  .vf-panel {
+    border: 2px solid ButtonText;
+  }
+  .vf-progress-fill {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
   .vf-sentence.is-current {
     forced-color-adjust: none;
     background: Highlight;

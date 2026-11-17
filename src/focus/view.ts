@@ -1,91 +1,204 @@
 import { h, uid, type Child } from '@/ui/dom';
-import { icon, logoMark } from '@/ui/icons';
-import { type Block, type FocusDoc, type FocusSettings, type Inline, SPEEDS, THEMES } from './model';
+import { icon } from '@/ui/icons';
+import { logoMark } from '@/ui/logo';
+import {
+  type Block,
+  type FocusDoc,
+  type FocusSettings,
+  type Inline,
+  readingMinutes,
+  SPEEDS,
+  TEXT_SIZES,
+  THEMES,
+} from './model';
 
 /**
- * Focus Mode's reading view: toolbar + article, rendered from a FocusDoc.
- * Pure DOM building, no browser extension APIs. Phase 4 mounts this inside a
- * <dialog> in a shadow root on the page; the design preview mounts it in a
- * shadow root inside a frame.
+ * Focus Mode's reading view: toolbar, progress bar and article, built from a
+ * FocusDoc. No browser extension APIs. Phase 4 mounts it inside a <dialog>
+ * in a shadow root on the page; the design preview mounts it in a shadow root
+ * inside a frame.
+ *
+ * Toolbar: mark + site name | previous, Play, next | "Aa" panel, Close.
+ * The "Aa" button is a disclosure for text size, theme and speed. Changes
+ * apply to the view immediately and are reported through onSettingsChange.
  */
-
-export interface FocusUiState {
-  playing: boolean;
-}
 
 export interface FocusHandlers {
   onClose(): void;
   onPlayPause(): void;
   onPrevious(): void;
   onNext(): void;
-  onSpeed(speed: number): void;
-  onTextSize(direction: -1 | 1): void;
-  onTheme(theme: FocusSettings['theme']): void;
+  /** Called after the view has already applied the change. */
+  onSettingsChange(settings: FocusSettings): void;
 }
 
-export interface FocusViewRefs {
+export interface FocusView {
   root: HTMLElement;
   article: HTMLElement;
   scroller: HTMLElement;
-  playButton: HTMLButtonElement;
+  setPlaying(playing: boolean): void;
+  setSettings(settings: FocusSettings): void;
+  openPanel(): void;
+  closePanel(returnFocus: boolean): void;
+  destroy(): void;
 }
 
 export function renderFocusView(
   doc: FocusDoc,
-  settings: FocusSettings,
-  ui: FocusUiState,
+  initialSettings: FocusSettings,
+  initialPlaying: boolean,
   handlers: FocusHandlers,
-): FocusViewRefs {
+): FocusView {
+  let settings = { ...initialSettings };
   const titleId = uid('vf-title');
-  const playButton = h(
+  const panelId = uid('vf-panel');
+
+  /* ---- Toolbar ---- */
+
+  const playButton = h('button', {
+    type: 'button',
+    class: 'vf-play',
+    onclick: () => handlers.onPlayPause(),
+  });
+  const setPlaying = (playing: boolean) => {
+    const label = playing ? 'Pause' : 'Play';
+    playButton.setAttribute('aria-label', label);
+    playButton.title = label;
+    playButton.replaceChildren(icon(playing ? 'pause' : 'play', { filled: true }));
+    playButton.classList.toggle('is-playing', playing);
+  };
+  setPlaying(initialPlaying);
+
+  const aaButton = h(
     'button',
-    { type: 'button', class: 'vf-btn vf-btn-primary vf-play', onclick: () => handlers.onPlayPause() },
-    icon(ui.playing ? 'pause' : 'play'),
-    h('span', null, ui.playing ? 'Pause' : 'Play'),
+    {
+      type: 'button',
+      class: 'vf-round vf-aa',
+      'aria-expanded': 'false',
+      'aria-controls': panelId,
+      'aria-label': 'Reading settings',
+      title: 'Reading settings: text size, theme and speed',
+      onclick: () => (panel.hidden ? openPanel() : closePanel(false)),
+    },
+    h('span', { 'aria-hidden': 'true' }, 'Aa'),
   );
 
+  /* ---- "Aa" panel ---- */
+
+  const sizeId = uid('vf-size');
+  const speedId = uid('vf-speed');
+  const sizeOut = h('output', { for: sizeId, class: 'vf-value' });
+  const speedOut = h('output', { for: speedId, class: 'vf-value' });
+  const sizeInput = h('input', {
+    id: sizeId,
+    type: 'range',
+    min: 0,
+    max: TEXT_SIZES.length - 1,
+    step: 1,
+    oninput: () => {
+      const px = TEXT_SIZES[Number(sizeInput.value)] ?? settings.textSize;
+      update({ ...settings, textSize: px });
+    },
+  });
+  const speedInput = h('input', {
+    id: speedId,
+    type: 'range',
+    min: 0,
+    max: SPEEDS.length - 1,
+    step: 1,
+    oninput: () => {
+      const speed = SPEEDS[Number(speedInput.value)] ?? settings.speed;
+      update({ ...settings, speed });
+    },
+  });
+  const themeName = uid('vf-theme');
+  const themeInputs = THEMES.map((theme) =>
+    h('input', {
+      type: 'radio',
+      name: themeName,
+      value: theme.id,
+      onchange: () => update({ ...settings, theme: theme.id }),
+    }),
+  );
+
+  const panel = h(
+    'div',
+    { id: panelId, class: 'vf-panel', role: 'group', 'aria-label': 'Reading settings', hidden: true },
+    h(
+      'div',
+      { class: 'vf-field' },
+      h('div', { class: 'vf-field-head' }, h('label', { for: sizeId }, 'Text size'), sizeOut),
+      sizeInput,
+    ),
+    h(
+      'fieldset',
+      { class: 'vf-field' },
+      h('legend', null, 'Theme'),
+      h(
+        'div',
+        { class: 'vf-themes' },
+        THEMES.map((theme, i) =>
+          h(
+            'label',
+            { class: 'vf-theme' },
+            themeInputs[i],
+            h('span', { class: 'vf-swatch', 'data-swatch': theme.id, 'aria-hidden': 'true' }, 'Aa'),
+            h('span', null, theme.label),
+          ),
+        ),
+      ),
+    ),
+    h(
+      'div',
+      { class: 'vf-field' },
+      h('div', { class: 'vf-field-head' }, h('label', { for: speedId }, 'Reading speed'), speedOut),
+      speedInput,
+    ),
+  );
+
+  const settingsWrap = h('div', { class: 'vf-settings' }, aaButton, panel);
+
+  const siteName = doc.siteName ?? '';
   const toolbar = h(
     'div',
     { class: 'vf-toolbar' },
-    h('div', { class: 'vf-brand' }, logoMark('vf-logo'), h('span', { class: 'vf-hide-narrow' }, 'Focus Mode')),
     h(
       'div',
-      { class: 'vf-group', role: 'group', 'aria-label': 'Read aloud' },
-      iconButton('previous', 'Previous sentence', handlers.onPrevious),
+      { class: 'vf-tb-start' },
+      logoMark(28, 'vf-mark'),
+      siteName && h('span', { class: 'vf-site vf-hide-narrow' }, siteName),
+    ),
+    h(
+      'div',
+      { class: 'vf-tb-center', role: 'group', 'aria-label': 'Read aloud' },
+      roundButton('skipBack', 'Previous sentence', handlers.onPrevious),
       playButton,
-      iconButton('next', 'Next sentence', handlers.onNext),
-      selectControl(
-        'Speed',
-        SPEEDS.map((s) => ({ value: String(s), label: `${s}×` })),
-        String(settings.speed),
-        (value) => handlers.onSpeed(Number(value)),
-      ),
+      roundButton('skipForward', 'Next sentence', handlers.onNext),
     ),
     h(
       'div',
-      { class: 'vf-group', role: 'group', 'aria-label': 'Display' },
-      iconButton('textSmaller', 'Smaller text', () => handlers.onTextSize(-1)),
-      iconButton('textLarger', 'Larger text', () => handlers.onTextSize(1)),
-      selectControl(
-        'Theme',
-        THEMES.map((t) => ({ value: t.id, label: t.label })),
-        settings.theme,
-        (value) => handlers.onTheme(value as FocusSettings['theme']),
+      { class: 'vf-tb-end' },
+      settingsWrap,
+      h(
+        'button',
+        { type: 'button', class: 'vf-close', title: 'Close Focus Mode (Escape)', onclick: () => handlers.onClose() },
+        icon('x'),
+        h('span', { class: 'vf-hide-narrow' }, 'Close'),
       ),
-    ),
-    h(
-      'button',
-      { type: 'button', class: 'vf-btn vf-close', onclick: () => handlers.onClose() },
-      icon('close'),
-      h('span', { class: 'vf-hide-narrow' }, 'Close'),
     ),
   );
 
-  const meta = [doc.siteName, doc.byline].filter(Boolean).join(' · ');
+  /* ---- Progress + article ---- */
+
+  const progressFill = h('div', { class: 'vf-progress-fill' });
+  const progress = h('div', { class: 'vf-progress', 'aria-hidden': 'true' }, progressFill);
+
+  const minutes = readingMinutes(doc);
+  const meta = [doc.siteName, doc.byline, `${minutes} min read`].filter(Boolean).join(' · ');
   const article = h(
     'article',
     { class: 'vf-article', lang: doc.lang, dir: doc.dir, 'aria-labelledby': titleId },
-    meta && h('p', { class: 'vf-meta' }, meta),
+    h('p', { class: 'vf-meta' }, meta),
     h('h1', { id: titleId }, doc.title),
     doc.isFallback &&
       h(
@@ -100,47 +213,106 @@ export function renderFocusView(
       ),
     doc.blocks.map(renderBlock),
   );
-
   const scroller = h('div', { class: 'vf-scroll' }, article);
-  const root = h(
-    'div',
-    {
-      class: 'vf-focus',
-      'data-theme': settings.theme,
-      style: `--vf-text-size: ${settings.textSize}px`,
-    },
-    toolbar,
-    scroller,
-  );
+  const root = h('div', { class: 'vf-focus' }, toolbar, progress, scroller);
 
-  return { root, article, scroller, playButton };
+  /* ---- Behavior ---- */
+
+  function applySettings(next: FocusSettings): void {
+    settings = { ...next };
+    root.dataset.theme = settings.theme;
+    root.style.setProperty('--vf-text-size', `${settings.textSize}px`);
+    const sizeIndex = Math.max(0, TEXT_SIZES.indexOf(settings.textSize as (typeof TEXT_SIZES)[number]));
+    sizeInput.value = String(sizeIndex);
+    sizeInput.setAttribute('aria-valuetext', `${settings.textSize} pixels`);
+    sizeOut.textContent = `${settings.textSize} px`;
+    const speedIndex = Math.max(0, SPEEDS.indexOf(settings.speed as (typeof SPEEDS)[number]));
+    speedInput.value = String(speedIndex);
+    speedInput.setAttribute('aria-valuetext', `${settings.speed} times`);
+    speedOut.textContent = `${settings.speed}×`;
+    themeInputs.forEach((input) => {
+      input.checked = input.value === settings.theme;
+    });
+  }
+
+  function update(next: FocusSettings): void {
+    applySettings(next);
+    handlers.onSettingsChange({ ...settings });
+  }
+
+  function openPanel(): void {
+    panel.hidden = false;
+    aaButton.setAttribute('aria-expanded', 'true');
+  }
+
+  function closePanel(returnFocus: boolean): void {
+    if (panel.hidden) return;
+    panel.hidden = true;
+    aaButton.setAttribute('aria-expanded', 'false');
+    if (returnFocus) aaButton.focus();
+  }
+
+  // Escape inside the panel closes it and returns to "Aa", and must not also
+  // close Focus Mode, so the event stops here.
+  const onKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !panel.hidden) {
+      event.preventDefault();
+      event.stopPropagation();
+      closePanel(true);
+    }
+  };
+  settingsWrap.addEventListener('keydown', onKeydown);
+
+  // Clicking elsewhere, or tabbing out of the panel, closes it.
+  const onPointerDown = (event: PointerEvent) => {
+    if (!panel.hidden && !settingsWrap.contains(event.target as Node)) closePanel(false);
+  };
+  root.addEventListener('pointerdown', onPointerDown);
+  const onFocusOut = (event: FocusEvent) => {
+    const next = event.relatedTarget as Node | null;
+    if (next && !settingsWrap.contains(next)) closePanel(false);
+  };
+  settingsWrap.addEventListener('focusout', onFocusOut);
+
+  // Reading progress: how far through the article the reader has scrolled.
+  let frame = 0;
+  const onScroll = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const max = scroller.scrollHeight - scroller.clientHeight;
+      const ratio = max > 0 ? Math.min(1, scroller.scrollTop / max) : 1;
+      progressFill.style.transform = `scaleX(${ratio})`;
+    });
+  };
+  scroller.addEventListener('scroll', onScroll, { passive: true });
+  progressFill.style.transform = 'scaleX(0)';
+
+  applySettings(settings);
+
+  return {
+    root,
+    article,
+    scroller,
+    setPlaying,
+    setSettings: applySettings,
+    openPanel,
+    closePanel,
+    destroy() {
+      settingsWrap.removeEventListener('keydown', onKeydown);
+      settingsWrap.removeEventListener('focusout', onFocusOut);
+      root.removeEventListener('pointerdown', onPointerDown);
+      scroller.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    },
+  };
 }
 
-function iconButton(name: Parameters<typeof icon>[0], label: string, onClick: () => void): HTMLButtonElement {
-  // aria-label is the name; title shows the same words as a tooltip for mouse users.
+function roundButton(name: 'skipBack' | 'skipForward', label: string, onClick: () => void): HTMLButtonElement {
   return h(
     'button',
-    { type: 'button', class: 'vf-btn vf-icon-btn', 'aria-label': label, title: label, onclick: () => onClick() },
+    { type: 'button', class: 'vf-round', 'aria-label': label, title: label, onclick: () => onClick() },
     icon(name),
-  );
-}
-
-function selectControl(
-  label: string,
-  options: { value: string; label: string }[],
-  selected: string,
-  onChange: (value: string) => void,
-): HTMLElement {
-  const id = uid('vf-select');
-  return h(
-    'span',
-    { class: 'vf-select' },
-    h('label', { for: id, class: 'vf-hide-narrow' }, label),
-    h(
-      'select',
-      { id, onchange: (event: Event) => onChange((event.target as HTMLSelectElement).value) },
-      options.map((o) => h('option', { value: o.value, selected: o.value === selected }, o.label)),
-    ),
   );
 }
 

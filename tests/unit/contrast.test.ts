@@ -62,19 +62,25 @@ const NON_TEXT = 3;
 const UI_PAIRS: Pair[] = [
   ['text', 'bg', AA],
   ['text', 'surface', AA],
-  ['text', 'surface-2', AA],
+  ['text', 'tint', AA], // rows grouped on a tint
+  ['text', 'tint-strong', AA], // keyboard shortcut chips, hover
   ['text-muted', 'bg', AA],
   ['text-muted', 'surface', AA],
-  ['text-muted', 'surface-2', AA],
-  ['accent', 'surface', AA], // links and link-style buttons
-  ['accent', 'bg', AA],
+  ['text-muted', 'tint', AA],
+  ['accent', 'surface', AA], // "See what changed", text buttons
+  ['accent', 'bg', AA], // Back button
+  ['accent', 'tint-strong', AA], // Back button on hover
   ['on-accent', 'accent', AA], // primary button text
   ['on-accent', 'accent-hover', AA],
-  ['on-accent-soft', 'accent-soft', AA], // secondary button text, count badge
-  ['control-border', 'surface', NON_TEXT], // switch, inputs, quiet buttons
+  ['on-accent', 'accent-press', AA],
+  ['on-accent-soft', 'accent-soft', AA], // tiles, tonal buttons
+  ['on-accent-soft', 'accent-soft-hover', AA],
+  ['control-border', 'surface', NON_TEXT], // switch, inputs, outlined buttons
   ['control-border', 'bg', NON_TEXT],
-  ['control-border', 'surface-2', NON_TEXT], // switch knob on its track (off)
+  ['control-border', 'tint', NON_TEXT],
+  ['control-border', 'tint-strong', NON_TEXT], // switch knob on its track (off)
   ['accent', 'surface', NON_TEXT], // switch track (on)
+  ['status-on', 'surface', NON_TEXT], // status dot
   ['focus', 'surface', NON_TEXT],
   ['focus', 'bg', NON_TEXT],
 ];
@@ -87,16 +93,21 @@ const FOCUS_PAIRS: Pair[] = [
   ['link', 'bg', AAA],
   ['muted', 'bg', AAA],
   ['text', 'code-bg', AAA],
-  ['control-text', 'toolbar-bg', AAA],
-  ['control-text', 'control-bg', AAA],
+  ['control-text', 'toolbar-bg', AAA], // site name, Close
+  ['control-text', 'round-bg', AAA], // "Aa", previous/next
   ['control-text', 'control-hover', AAA],
-  ['primary-text', 'primary-bg', AAA],
+  ['control-text', 'panel-bg', AAA], // Aa panel labels
+  ['primary-text', 'primary-bg', AAA], // Play
   ['primary-text', 'primary-hover', AAA],
   ['hl-text', 'hl-bg', AAA], // the sentence being read
-  ['control-border', 'toolbar-bg', NON_TEXT],
+  ['control-border', 'toolbar-bg', NON_TEXT], // Close outline
   ['control-border', 'bg', NON_TEXT], // "read from here" button
+  ['primary-bg', 'toolbar-bg', NON_TEXT], // Play button shape
+  ['range', 'panel-bg', NON_TEXT], // sliders and radios in the panel
+  ['progress', 'progress-track', NON_TEXT],
   ['focus', 'bg', NON_TEXT],
   ['focus', 'toolbar-bg', NON_TEXT],
+  ['focus', 'panel-bg', NON_TEXT],
   ['hl-line', 'hl-bg', NON_TEXT], // underline under the sentence being read
   ['quote-bar', 'bg', NON_TEXT],
   ['notice-border', 'bg', NON_TEXT],

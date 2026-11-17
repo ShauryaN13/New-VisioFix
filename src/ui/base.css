@@ -1,7 +1,7 @@
 /*
- * Shared components for the popup and settings page: buttons, switch, cards,
- * disclosure, keyboard hints. Every interactive element has a visible focus ring
- * and a target of at least 44px tall.
+ * Shared components for the popup and settings page. One level of cards at
+ * most; groups inside a card use spacing and the --tint background, not
+ * borders. Every control has a visible focus ring and a 40px+ target.
  */
 
 *,
@@ -12,7 +12,7 @@
 
 html {
   font-family: var(--font);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -50,8 +50,10 @@ textarea {
   color: inherit;
 }
 
-svg {
+.icon {
   flex: none;
+  width: 20px;
+  height: 20px;
 }
 
 :focus-visible {
@@ -75,31 +77,25 @@ svg {
   color: var(--text-muted);
 }
 
-/* ---------- Logo ---------- */
+/* ---------- Brand ---------- */
 
-.logo {
+.brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   font-weight: 700;
 }
-.logo svg {
-  width: 32px;
-  height: 32px;
+.logo-mark {
+  flex: none;
+  border-radius: 7px;
 }
 
 /* ---------- Cards ---------- */
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.card-title {
-  font-size: var(--text-md);
-  font-weight: 700;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 /* ---------- Buttons ---------- */
@@ -111,17 +107,19 @@ svg {
   gap: var(--space-2);
   min-height: 44px;
   padding: var(--space-2) var(--space-4);
-  border: 2px solid transparent;
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: var(--radius-control);
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
   cursor: pointer;
-  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+  transition:
+    background-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
-.btn svg {
-  width: 20px;
-  height: 20px;
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
@@ -131,80 +129,74 @@ svg {
 .btn-primary:hover {
   background: var(--accent-hover);
 }
+.btn-primary:active {
+  background: var(--accent-press);
+}
 
-.btn-secondary {
+.btn-tonal {
   background: var(--accent-soft);
   color: var(--on-accent-soft);
-  border-color: var(--control-border);
 }
-.btn-secondary:hover {
-  border-color: var(--accent);
+.btn-tonal:hover {
+  background: var(--accent-soft-hover);
 }
 
-.btn-quiet {
+/* Outlined: for secondary actions on a card */
+.btn-outline {
   background: transparent;
   color: var(--text);
-  border-color: var(--control-border);
+  box-shadow: inset 0 0 0 2px var(--control-border);
 }
-.btn-quiet:hover {
-  background: var(--surface-2);
+.btn-outline:hover {
+  background: var(--tint);
 }
 
-/* Text-style button for links that open pages (e.g. Settings) */
-.btn-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 0 var(--space-1);
+/* Square icon-only button (Settings gear, Back) */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: 0;
-  background: none;
-  color: var(--accent);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
   cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
-.btn-link svg {
-  width: 18px;
-  height: 18px;
+.icon-btn:hover {
+  background: var(--tint-strong);
 }
-
-/* Large action buttons (popup) */
-.btn-large {
-  width: 100%;
-  min-height: 56px;
-  justify-content: flex-start;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius);
-  font-size: var(--text-lg);
+.icon-btn:active {
+  transform: scale(0.94);
 }
-.btn-large svg {
-  width: 24px;
-  height: 24px;
-}
-.btn-large .kbd {
-  margin-inline-start: auto;
+.icon-btn .icon {
+  width: 22px;
+  height: 22px;
 }
 
-/* Keyboard shortcut hint */
+/* Keyboard shortcut */
 .kbd {
   display: inline-block;
   padding: 2px var(--space-2);
-  border: 1px solid currentColor;
   border-radius: 6px;
+  background: var(--tint-strong);
   font-size: var(--text-sm);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
 }
 
 /* ---------- Switch ----------
    <button role="switch" aria-checked="true|false">
-   State is shown three ways: knob position, fill, and the On/Off text. */
+   State shows three ways: knob position, fill, and the On/Off text. */
 
 .switch {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: var(--space-2);
   min-height: 44px;
@@ -213,38 +205,49 @@ svg {
   background: none;
   cursor: pointer;
   font-weight: 700;
+  font-size: var(--text-sm);
 }
 .switch-track {
   position: relative;
   display: inline-block;
-  width: 48px;
+  width: 46px;
   height: 28px;
-  border: 2px solid var(--control-border);
-  border-radius: 999px;
-  background: var(--surface-2);
-  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+  border-radius: var(--radius-pill);
+  background: var(--tint-strong);
+  box-shadow: inset 0 0 0 2px var(--control-border);
+  transition:
+    background-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
 }
 .switch-track::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: 5px;
+  left: 5px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: var(--control-border);
-  transition: transform var(--duration) var(--ease), background-color var(--duration) var(--ease);
+  transition:
+    transform var(--duration) var(--ease),
+    background-color var(--duration) var(--ease);
 }
 .switch[aria-checked='true'] .switch-track {
   background: var(--accent);
-  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 .switch[aria-checked='true'] .switch-track::after {
-  transform: translateX(20px);
+  transform: translateX(18px);
   background: var(--on-accent);
 }
+.switch:active .switch-track::after {
+  width: 21px;
+}
+.switch:active[aria-checked='true'] .switch-track::after {
+  transform: translateX(15px);
+}
 .switch-state {
-  min-width: 2.2em;
+  min-width: 2em;
   text-align: start;
 }
 .switch:focus-visible {
@@ -260,70 +263,37 @@ svg {
 .disclosure > summary {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 48px;
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
+  min-height: 40px;
   cursor: pointer;
   list-style: none;
-  border-radius: var(--radius);
+  border-radius: var(--radius-control);
+  font-weight: 700;
+  color: var(--accent);
 }
 .disclosure > summary::-webkit-details-marker {
   display: none;
 }
-.disclosure > summary .chevron {
-  width: 20px;
-  height: 20px;
-  margin-inline-start: auto;
+.disclosure > summary .icon {
   transition: transform var(--duration) var(--ease);
 }
-.disclosure[open] > summary .chevron {
+.disclosure[open] > summary .icon {
   transform: rotate(180deg);
 }
 
-/* ---------- Badges ---------- */
+/* ---------- Status dot ---------- */
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  min-width: 28px;
-  height: 24px;
-  padding: 0 var(--space-2);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  justify-content: center;
+.status-dot {
+  flex: none;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--status-on);
 }
-
-/* ---------- Message (empty and error states) ---------- */
-
-.message {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-3);
-  align-items: start;
-  padding: var(--space-4);
-}
-.message > svg {
-  grid-row: span 2;
-  width: 24px;
-  height: 24px;
-  margin-top: 1px;
-  color: var(--text-muted);
-}
-.message-title {
-  font-size: var(--text-md);
-  font-weight: 700;
-  line-height: 1.4;
-}
-.message-body {
-  color: var(--text-muted);
-}
-.message .btn {
-  grid-column: 2;
-  justify-self: start;
-  margin-top: var(--space-2);
+.status-dot.is-off {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--control-border);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -334,13 +304,26 @@ svg {
     animation-duration: 0s !important;
     scroll-behavior: auto !important;
   }
+  .btn:active,
+  .icon-btn:active {
+    transform: none;
+  }
 }
 
+/* Windows High Contrast and other forced-color modes drop backgrounds and
+   shadows, so give cards and controls real borders there. */
 @media (forced-colors: active) {
+  .card,
+  .tile,
+  .btn,
+  .icon-btn {
+    border: 1px solid CanvasText;
+  }
   .switch-track,
   .switch-track::after {
     forced-color-adjust: none;
-    border-color: CanvasText;
+    box-shadow: inset 0 0 0 2px CanvasText;
+    background: Canvas;
   }
   .switch-track::after {
     background: CanvasText;
@@ -350,5 +333,9 @@ svg {
   }
   .switch[aria-checked='true'] .switch-track::after {
     background: HighlightText;
+  }
+  .status-dot {
+    forced-color-adjust: none;
+    background: CanvasText;
   }
 }

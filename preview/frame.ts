@@ -1,21 +1,21 @@
 /**
  * Renders one screen with sample data, chosen by URL:
- *   frame.html?screen=popup&theme=light&state=ready&open=1
- *   frame.html?screen=focus&theme=contrast&variant=reading|fallback
+ *   frame.html?screen=popup&theme=light&state=ready&page=issues&open=1
+ *   frame.html?screen=focus&theme=contrast&variant=reading|panel|fallback
  *   frame.html?screen=options&theme=dark
- * The controls work (switches, theme, text size, play) so you can try them,
- * but nothing is saved and nothing is read aloud.
+ * The controls work (switches, Aa panel, theme, text size, play) so you can
+ * try them, but nothing is saved and nothing is read aloud.
  */
 import '@/ui/fonts.css';
 import '@/ui/tokens.css';
 import '@/ui/base.css';
 import focusCss from '@/focus/focus.css?inline';
-import { DEFAULT_TEXT_SIZE, type FocusSettings, TEXT_SIZES } from '@/focus/model';
+import { DEFAULT_TEXT_SIZE, type FocusSettings } from '@/focus/model';
 import { renderFocusView } from '@/focus/view';
 import { h } from '@/ui/dom';
 import { icon } from '@/ui/icons';
 import { type OptionsModel, renderOptions } from '@/ui/options/view';
-import { type PopupModel, renderPopup } from '@/ui/popup/view';
+import { type PopupModel, type PopupPage, renderPopup } from '@/ui/popup/view';
 import { article, fallbackDoc, optionsModel, popupStates } from './sample-data';
 
 const params = new URLSearchParams(location.search);
@@ -23,11 +23,17 @@ const screen = params.get('screen') ?? 'popup';
 const theme = params.get('theme') ?? 'light';
 const frameId = params.get('id') ?? '';
 
-function reportSize(): void {
-  // The body's own height, not the document's: the document is never shorter than
-  // the frame, so it could only ever grow.
-  const height = Math.ceil(document.body.getBoundingClientRect().height);
-  parent.postMessage({ type: 'vf-preview-size', id: frameId, height }, '*');
+/** Tells the gallery how tall this screen is, whenever that changes. */
+function watchSize(): void {
+  let last = 0;
+  const report = () => {
+    const height = Math.ceil(document.body.getBoundingClientRect().height);
+    if (height === last) return;
+    last = height;
+    parent.postMessage({ type: 'vf-preview-size', id: frameId, height }, '*');
+  };
+  new ResizeObserver(report).observe(document.body);
+  void document.fonts.ready.then(report);
 }
 
 async function main(): Promise<void> {
@@ -40,37 +46,41 @@ async function main(): Promise<void> {
     let model: PopupModel = structuredClone(popupStates[params.get('state') ?? 'ready'] ?? fallback);
     // When the switch is turned back on, show the sample report again.
     const sampleReport = fallback.view.kind === 'ready' ? fallback.view.report : null;
-    const draw = () => {
-      renderPopup(root, model, {
-        onToggleSite: (on) => {
-          if (model.view.kind === 'ready') {
-            model = { ...model, view: { ...model.view, repairsOn: on, report: on ? sampleReport : null } };
-            draw();
-            root.querySelector<HTMLElement>('[role="switch"]')?.focus();
-          }
+    const draw = (page?: PopupPage) => {
+      renderPopup(
+        root,
+        model,
+        {
+          onToggleSite: (on) => {
+            if (model.view.kind === 'ready') {
+              model = { ...model, view: { ...model.view, repairsOn: on, report: on ? sampleReport : null } };
+              draw();
+            }
+          },
+          onTurnOnEverywhere: () => undefined,
+          onFocusMode: () => undefined,
+          onReadAloud: () => undefined,
+          onReload: () => undefined,
+          onOpenSettings: () => undefined,
         },
-        onTurnOnEverywhere: () => undefined,
-        onFocusMode: () => undefined,
-        onReadAloud: () => undefined,
-        onReload: () => undefined,
-        onOpenSettings: () => undefined,
-      });
-      if (params.get('open') === '1') root.querySelector('details')?.setAttribute('open', '');
-      root.querySelector('details')?.addEventListener('toggle', reportSize);
-      reportSize();
+        page,
+      );
     };
-    draw();
+    draw((params.get('page') as PopupPage | null) ?? 'main');
+    if (params.get('open') === '1') root.querySelector('details')?.setAttribute('open', '');
+    watchSize();
   } else if (screen === 'options') {
     document.documentElement.dataset.theme = theme;
+    document.documentElement.style.overflow = 'hidden';
     await import('@/ui/options/options.css');
     const root = h('div');
     document.body.append(root);
     let model: OptionsModel = structuredClone(optionsModel);
-    const draw = (focusSelector?: string) => {
+    const draw = () =>
       renderOptions(root, model, {
         onRepairsOn: (on) => {
           model = { ...model, repairsOn: on };
-          draw('.options-section:nth-of-type(1) [role="switch"]');
+          draw();
         },
         onTurnSiteBackOn: (host) => {
           model = { ...model, offSites: model.offSites.filter((s) => s !== host) };
@@ -87,7 +97,7 @@ async function main(): Promise<void> {
         },
         onAllowOnlineVoices: (on) => {
           model = { ...model, allowOnlineVoices: on };
-          draw('.options-section:nth-of-type(3) [role="switch"]');
+          draw();
         },
         onSpeed: (s) => {
           model = { ...model, speed: s };
@@ -95,10 +105,8 @@ async function main(): Promise<void> {
         onPlaySample: () => undefined,
         onChangeShortcuts: () => undefined,
       });
-      if (focusSelector) root.querySelector<HTMLElement>(focusSelector)?.focus();
-      reportSize();
-    };
     draw();
+    watchSize();
   } else {
     renderFocusPreview();
   }
@@ -114,41 +122,29 @@ function renderFocusPreview(): void {
   document.body.append(host);
   const shadow = host.attachShadow({ mode: 'open' });
 
-  let settings: FocusSettings = {
+  const settings: FocusSettings = {
     theme: (['contrast', 'dark', 'light'].includes(theme) ? theme : 'contrast') as FocusSettings['theme'],
     textSize: Number(params.get('size')) || DEFAULT_TEXT_SIZE,
     speed: 1,
   };
   let playing = variant === 'reading' && settings.theme === 'contrast';
 
-  const draw = (refocus?: string) => {
-    const view = renderFocusView(doc, settings, { playing }, {
-      onClose: () => undefined,
-      onPlayPause: () => {
-        playing = !playing;
-        draw('.vf-play');
-      },
-      onPrevious: () => undefined,
-      onNext: () => undefined,
-      onSpeed: (speed) => {
-        settings = { ...settings, speed };
-      },
-      onTextSize: (direction) => {
-        const i = TEXT_SIZES.indexOf(settings.textSize as (typeof TEXT_SIZES)[number]);
-        const next = TEXT_SIZES[Math.min(TEXT_SIZES.length - 1, Math.max(0, i + direction))];
-        settings = { ...settings, textSize: next ?? settings.textSize };
-        draw(direction < 0 ? '[aria-label="Smaller text"]' : '[aria-label="Larger text"]');
-      },
-      onTheme: (t) => {
-        settings = { ...settings, theme: t };
-        draw('select');
-      },
-    });
-    if (variant === 'reading') showReadingDemo(view.article);
-    shadow.replaceChildren(h('style', null, focusCss), view.root);
-    if (refocus) shadow.querySelector<HTMLElement>(refocus)?.focus();
-  };
-  draw();
+  const view = renderFocusView(doc, settings, playing, {
+    onClose: () => undefined,
+    onPlayPause: () => {
+      playing = !playing;
+      view.setPlaying(playing);
+    },
+    onPrevious: () => undefined,
+    onNext: () => undefined,
+    onSettingsChange: () => undefined,
+  });
+  if (variant !== 'fallback') showReadingDemo(view.article);
+  shadow.replaceChildren(h('style', null, focusCss), view.root);
+
+  if (variant === 'panel') view.openPanel();
+  // Scroll a little so the reading-progress bar shows.
+  if (variant === 'reading') requestAnimationFrame(() => (view.scroller.scrollTop = 140));
 }
 
 /** Shows what read-aloud looks like: one highlighted sentence and the hover play button. */
@@ -158,7 +154,7 @@ function showReadingDemo(articleEl: HTMLElement): void {
   const hovered = paragraphs[2];
   if (hovered) {
     hovered.classList.add('is-hover');
-    hovered.prepend(h('span', { class: 'vf-play-here', 'aria-hidden': 'true' }, icon('play')));
+    hovered.prepend(h('span', { class: 'vf-play-here', 'aria-hidden': 'true' }, icon('play', { filled: true })));
   }
 }
 

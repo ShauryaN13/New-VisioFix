@@ -1,109 +1,134 @@
 /**
- * Icons, drawn on a 24px grid, built with createElementNS (no innerHTML).
- * Every icon is decorative (aria-hidden): the button or text next to it
- * carries the meaning, so screen readers never hear "image".
+ * Icons: a handful of SVGs copied from Lucide (lucide.dev, v1.73.0, ISC license;
+ * full text in public/licenses/lucide.txt, which ships with the extension).
+ * Only the icons VisioFix uses are copied; there is no Lucide package.
+ *
+ * All share Lucide's style: 24px grid, 2px round stroke. They're built with
+ * createElementNS (no innerHTML) and are always decorative (aria-hidden):
+ * the button or text next to an icon carries the meaning.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-interface Shape {
-  d: string;
-  /** Filled shapes; everything else is a 2px rounded stroke. */
-  fill?: boolean;
-}
+type Shape = ['path', string] | ['circle', number, number, number] | ['rect', number, number, number, number, number];
 
 const ICONS = {
-  close: [{ d: 'M6 6l12 12M18 6L6 18' }],
-  play: [{ d: 'M8 5.2v13.6a.6.6 0 0 0 .9.5l10.6-6.8a.6.6 0 0 0 0-1L8.9 4.7a.6.6 0 0 0-.9.5z', fill: true }],
-  pause: [{ d: 'M7 5h3.5v14H7zM13.5 5H17v14h-3.5z', fill: true }],
-  previous: [{ d: 'M6 6v12' }, { d: 'M18 6.6v10.8a.6.6 0 0 1-.95.5L9.4 12.5a.6.6 0 0 1 0-1l7.65-5.4a.6.6 0 0 1 .95.5z', fill: true }],
-  next: [{ d: 'M18 6v12' }, { d: 'M6 6.6v10.8a.6.6 0 0 0 .95.5l7.65-5.4a.6.6 0 0 0 0-1L6.95 6.1a.6.6 0 0 0-.95.5z', fill: true }],
-  book: [{ d: 'M3 5.5c3-1.2 6-1 9 1v13c-3-2-6-2.2-9-1zM21 5.5c-3-1.2-6-1-9 1v13c3-2 6-2.2 9-1z' }],
-  speaker: [{ d: 'M4 9.5h3.5L12 6v12l-4.5-3.5H4z' }, { d: 'M15.5 9.2a4 4 0 0 1 0 5.6M18.2 6.5a7.7 7.7 0 0 1 0 11' }],
   settings: [
-    { d: 'M4 7h9M17 7h3M4 17h3M11 17h9' },
-    { d: 'M15 4.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 1 0 0-4.4zM9 14.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 1 0 0-4.4z' },
+    [
+      'path',
+      'M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915',
+    ],
+    ['circle', 12, 12, 3],
   ],
-  chevronDown: [{ d: 'M6 9l6 6 6-6' }],
-  arrowRight: [{ d: 'M5 12h14M13 6l6 6-6 6' }],
-  reload: [{ d: 'M20 12a8 8 0 1 1-2.3-5.7' }, { d: 'M20 4v5h-5' }],
-  check: [{ d: 'M5 12.5l4.5 4.5L19 7.5' }],
-  info: [{ d: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z' }, { d: 'M12 11v5.5M12 7.5v.01' }],
-  blocked: [{ d: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z' }, { d: 'M5.7 5.7l12.6 12.6' }],
-  power: [{ d: 'M12 3v8' }, { d: 'M6.6 6.6a7.8 7.8 0 1 0 10.8 0' }],
-  textSmaller: [{ d: 'M4 18l5-12 5 12M5.7 14h6.6' }, { d: 'M16 12h5' }],
-  textLarger: [{ d: 'M3 18l5-12 5 12M4.7 14h6.6' }, { d: 'M15 12h6M18 9v6' }],
+  x: [
+    ['path', 'M18 6 6 18'],
+    ['path', 'm6 6 12 12'],
+  ],
+  play: [['path', 'M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z']],
+  pause: [
+    ['rect', 14, 3, 5, 18, 1],
+    ['rect', 5, 3, 5, 18, 1],
+  ],
+  skipBack: [
+    ['path', 'M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z'],
+    ['path', 'M3 20V4'],
+  ],
+  skipForward: [
+    ['path', 'M21 4v16'],
+    ['path', 'M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z'],
+  ],
+  bookOpen: [
+    ['path', 'M12 5v16'],
+    [
+      'path',
+      'M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z',
+    ],
+  ],
+  volume: [
+    [
+      'path',
+      'M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z',
+    ],
+    ['path', 'M16 9a5 5 0 0 1 0 6'],
+    ['path', 'M19.364 18.364a9 9 0 0 0 0-12.728'],
+  ],
+  chevronDown: [['path', 'm6 9 6 6 6-6']],
+  chevronRight: [['path', 'm9 18 6-6-6-6']],
+  arrowLeft: [
+    ['path', 'm12 19-7-7 7-7'],
+    ['path', 'M19 12H5'],
+  ],
+  check: [['path', 'M20 6 9 17l-5-5']],
+  info: [
+    ['circle', 12, 12, 10],
+    ['path', 'M12 16v-4'],
+    ['path', 'M12 8h.01'],
+  ],
+  ban: [
+    ['circle', 12, 12, 10],
+    ['path', 'M4.929 4.929 19.07 19.071'],
+  ],
+  rotateCw: [
+    ['path', 'M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8'],
+    ['path', 'M21 3v5h-5'],
+  ],
+  circleAlert: [
+    ['circle', 12, 12, 10],
+    ['path', 'M12 8v4'],
+    ['path', 'M12 16h.01'],
+  ],
+  circleCheck: [
+    ['circle', 12, 12, 10],
+    ['path', 'm16 9-5.5 5.5L8 12'],
+  ],
+  circlePause: [
+    ['circle', 12, 12, 10],
+    ['path', 'M10 15V9'],
+    ['path', 'M14 15V9'],
+  ],
+  externalLink: [
+    ['path', 'M15 3h6v6'],
+    ['path', 'M10 14 21 3'],
+    ['path', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'],
+  ],
 } satisfies Record<string, Shape[]>;
 
 export type IconName = keyof typeof ICONS;
 
-export function icon(name: IconName, className?: string): SVGSVGElement {
+export interface IconOptions {
+  className?: string;
+  /** Also fill the shape (used for the solid Play/Pause in the round Play button). */
+  filled?: boolean;
+}
+
+export function icon(name: IconName, options: IconOptions = {}): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('width', '24');
-  svg.setAttribute('height', '24');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  if (className) svg.setAttribute('class', className);
-  for (const shape of ICONS[name] as Shape[]) {
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', shape.d);
-    if (shape.fill) {
-      path.setAttribute('fill', 'currentColor');
-    } else {
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', 'currentColor');
-      path.setAttribute('stroke-width', '2');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
-    }
-    svg.appendChild(path);
-  }
+  setAll(svg, {
+    viewBox: '0 0 24 24',
+    width: '24',
+    height: '24',
+    fill: options.filled ? 'currentColor' : 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+    focusable: 'false',
+    class: `icon ${options.className ?? ''}`.trim(),
+  });
+  for (const shape of ICONS[name] as Shape[]) svg.appendChild(shapeElement(shape));
   return svg;
 }
 
-/**
- * The VisioFix mark (same geometry as src/assets/icon.svg, cropped to the tile).
- * Decorative: always shown next to the visible name "VisioFix".
- */
-export function logoMark(className = 'logo-mark'): SVGSVGElement {
-  const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', '16 16 96 96');
-  svg.setAttribute('width', '32');
-  svg.setAttribute('height', '32');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  svg.setAttribute('class', className);
+function shapeElement(shape: Shape): SVGElement {
+  const [tag] = shape;
+  const el = document.createElementNS(SVG_NS, tag);
+  if (shape[0] === 'path') setAll(el, { d: shape[1] });
+  else if (shape[0] === 'circle') setAll(el, { cx: shape[1], cy: shape[2], r: shape[3] });
+  else setAll(el, { x: shape[1], y: shape[2], width: shape[3], height: shape[4], rx: shape[5] });
+  return el;
+}
 
-  const tile = document.createElementNS(SVG_NS, 'rect');
-  for (const [k, v] of Object.entries({ x: '16', y: '16', width: '96', height: '96', rx: '22', fill: '#0B0B0C' })) {
-    tile.setAttribute(k, v);
-  }
-  const eye = document.createElementNS(SVG_NS, 'path');
-  for (const [k, v] of Object.entries({
-    d: 'M27 64 Q64 28 101 64 Q64 100 27 64 Z',
-    fill: 'none',
-    stroke: '#FFD400',
-    'stroke-width': '7',
-    'stroke-linejoin': 'round',
-  })) {
-    eye.setAttribute(k, v);
-  }
-  const iris = document.createElementNS(SVG_NS, 'circle');
-  for (const [k, v] of Object.entries({ cx: '64', cy: '64', r: '14.5', fill: '#FFD400' })) {
-    iris.setAttribute(k, v);
-  }
-  const check = document.createElementNS(SVG_NS, 'path');
-  for (const [k, v] of Object.entries({
-    d: 'M56.5 64.5 L61.8 69.8 L71.5 59.2',
-    fill: 'none',
-    stroke: '#0B0B0C',
-    'stroke-width': '4.4',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-  })) {
-    check.setAttribute(k, v);
-  }
-  svg.append(tile, eye, iris, check);
-  return svg;
+export function setAll(el: Element, attrs: Record<string, string | number>): void {
+  for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, String(value));
 }

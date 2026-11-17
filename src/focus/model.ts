@@ -54,3 +54,38 @@ export interface FocusSettings {
   textSize: number;
   speed: number;
 }
+
+/** Average silent reading speed for adults (words per minute). */
+const WORDS_PER_MINUTE = 230;
+
+/** Plain text of a list of inlines. */
+export function inlineText(inlines: Inline[]): string {
+  return inlines.map((i) => (typeof i === 'string' ? i : inlineText(i.children))).join('');
+}
+
+/** Plain text of a block (and its children). */
+export function blockText(block: Block): string {
+  switch (block.kind) {
+    case 'heading':
+    case 'paragraph':
+      return inlineText(block.content);
+    case 'list':
+      return block.items.map((item) => item.map(blockText).join(' ')).join(' ');
+    case 'quote':
+      return block.blocks.map(blockText).join(' ');
+    case 'code':
+      return block.text;
+    case 'figure':
+      return block.caption ? inlineText(block.caption) : '';
+  }
+}
+
+export function wordCount(doc: FocusDoc): number {
+  const text = [doc.title, ...doc.blocks.map(blockText)].join(' ');
+  return text.split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
+}
+
+/** Estimated reading time in whole minutes (at least 1). */
+export function readingMinutes(doc: FocusDoc): number {
+  return Math.max(1, Math.round(wordCount(doc) / WORDS_PER_MINUTE));
+}

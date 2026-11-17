@@ -74,8 +74,8 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm test` | Vitest unit tests (jsdom) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run design` | Design preview (dev only) at http://localhost:5180: every screen with sample data |
-| `npm run icons` | Renders `src/assets/icon*.svg` to `public/icon/{16,32,48,128}.png` |
-| `npm run fonts` | Copies the used woff2 files + OFL from the pinned @fontsource package to `public/fonts/` |
+| `npm run icons` | Renders the chosen icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png`, and all concepts to `preview/concepts/` |
+| `npm run fonts` | Copies the used woff2 files to `public/fonts/` and the OFL to `public/licenses/` |
 | `npm run fixtures` | (Phase 3) serves `tests/fixtures/` on localhost; tiny Node script, no dependency |
 
 **Dependencies** (✓ = installed)
@@ -182,41 +182,75 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
   sentence. Check conflicts on Windows, macOS, ChromeOS in Phase 5.
 
 ### 4. Popup and settings
-- Popup: logo + on/off switch for the current site; large Focus Mode and Read Aloud buttons;
-  "Fixed on this page" counts by type; page check (headings + reported issues), collapsible;
-  link to settings. States for "can't run here" and "reload this page".
-- Settings: global on/off, default theme, text size, voice (+ "Allow online voices"), speed,
-  list of keyboard shortcuts.
 - Popup and settings follow system light/dark. Font: Atkinson Hyperlegible Next.
-- Accent: deep blue #1A56DB in light (white text 6.2:1), #8AB4FF in dark (with #0B1530 text).
-  Focus Mode's light theme uses #1546B5 for its Play button and focus ring, because Focus Mode
-  needs AAA (7:1). VisioFix yellow #FFD400 appears only on the near-black logo tile (14.7:1).
 
-### Design system (Phase 2)
-- Tokens in `src/ui/tokens.css`, each color written once as `light-dark(LIGHT, DARK)`;
-  `data-theme` on `<html>` forces one side (used by the preview). Shared components in
-  `src/ui/base.css` (buttons, switch, cards, disclosure, badges, message). 4px spacing grid,
-  radius 8/12/16, 44px minimum targets, 3px focus ring with 2px offset, transitions off under
-  reduced motion, forced-colors support for the switch and the reading highlight.
-- Views are pure functions of state with handlers passed in, no browser APIs:
-  `src/ui/popup/view.ts` (`renderPopup`), `src/ui/options/view.ts` (`renderOptions`),
-  `src/focus/view.ts` (`renderFocusView`, from the `FocusDoc` model in `src/focus/model.ts`).
-  Report types the popup shows live in `src/shared/report.ts`.
-- DOM is built with `h()` from `src/ui/dom.ts` and icons with `createElementNS`
-  (`src/ui/icons.ts`): never innerHTML, so it works on sites that enforce Trusted Types.
-- Focus Mode CSS (`src/focus/focus.css`) is self-contained for the shadow root: px for the
-  toolbar, em for the article scaled by `--vf-text-size`; no rem. Themes are
-  `.vf-focus[data-theme='contrast'|'dark'|'light']` with `--f-*` variables. Below 640px the
-  toolbar's text labels become visually hidden so it fits in two rows.
-- Popup: switch is labeled "Automatic repairs" + host; Focus Mode works even when repairs are
-  off. States: ready (with report), repairs off for site, off everywhere, can't run here, needs
-  reload. The busiest default view (page check collapsed) is 586px, under Chrome's 600px cap.
-- `tests/unit/contrast.test.ts` reads the colors from the CSS and checks every pair (AA for
-  popup/settings, AAA for Focus Mode, 3:1 for outlines). Add new color pairs there.
-- Icon: `src/assets/icon.svg` (48/128: 96px tile in a 128 canvas, eye + check) and
-  `src/assets/icon-small.svg` (16/32: full tile, no check). `logoMark()` draws the same mark inline.
-- Design preview: `preview/` (Vite, dev only, not in the extension). `frame.html?screen=…`
-  renders one screen per frame; Focus Mode renders inside a shadow root like the real thing.
+### Design system (Phase 2, revision 2, per user feedback)
+**Brand and color**
+- Deep navy #0B1F4D is the brand: icon tile and logo mark. Blue is the one interactive accent:
+  #1A56DB light (white text 6.2:1), #8AB4FF dark (with #0B1530 text). Yellow #FFD400 appears
+  only in the icon and Focus Mode's High contrast theme.
+- Focus Mode's light theme uses #1546B5 for Play and the focus ring (AAA needs 7:1).
+
+**Type and shape**
+- Popup base 15px, settings base 16px, nothing under 13px. Scale 13/14/15/16/18/20/24/30.
+  One obvious title per screen.
+- At most one level of cards. Groups inside a card use spacing and the `--tint` background,
+  not 1px borders. Light mode cards get a soft shadow; dark cards stand apart by surface color.
+  Radius: 12px cards, 10px buttons and controls. Forced-colors mode adds real borders back.
+- Motion: 140ms on hover, press (scale ~0.98) and toggles; all off under prefers-reduced-motion.
+
+**Icons**
+- Lucide v1.73.0 (ISC), only the SVGs we use, copied into `src/ui/icons.ts` (no package).
+  Same 2px stroke everywhere. License ships in `public/licenses/lucide.txt`.
+- The VisioFix icon is data in `src/assets/brand.ts`: three concepts (code eye `< • >`,
+  V check, focus frame), each with a 16px "small" drawing and a 128px "detailed" drawing
+  (96px tile, 16px padding). `CHOSEN_ICON` picks the one used for `public/icon/*.png`
+  (`npm run icons`, which also renders all concepts into `preview/concepts/`) and for
+  `logoMark()` in `src/ui/logo.ts`. **Recommended: code eye. Waiting for the user's choice.**
+
+**Code structure**
+- Tokens in `src/ui/tokens.css` (`light-dark(LIGHT, DARK)` per color; `data-theme` on `<html>`
+  forces one side). Shared components in `src/ui/base.css`.
+- Views are functions of state with handlers passed in, no browser APIs: `renderPopup`
+  (`src/ui/popup/view.ts`), `renderOptions` (`src/ui/options/view.ts`), `renderFocusView`
+  (`src/focus/view.ts`, from the `FocusDoc` model). Re-renders keep focus via `data-focus-key`.
+- DOM is built with `h()` (`src/ui/dom.ts`) and `createElementNS`: never innerHTML, so it
+  works on sites that enforce Trusted Types.
+- `tests/unit/contrast.test.ts` reads colors from the CSS and checks every pair (AA popup and
+  settings, AAA Focus Mode, 3:1 non-text). Add new color pairs there.
+
+**Popup** (360px wide; Chrome caps height at 600px; only `.popup-body` scrolls)
+- Header: mark, "VisioFix" (h1), gear icon button "Settings".
+- Status card: host (h2), status dot + "Repairing this page" / "Paused on this site", switch
+  (name "Automatic repairs on this site", described by the status line). Focus Mode works even
+  when repairs are paused.
+- Two equal tiles, icon above label: Focus Mode, Read aloud. Shortcut is the accessible
+  description and the tooltip, not printed.
+- "12 fixes on this page" + "See what changed" disclosure (collapsed by default).
+- One line "11 things VisioFix can't fix safely" opens an in-popup details page with a Back
+  button: plain-language label, technical term underneath, counts; heading list capped at 4
+  + "and N more". Focus moves to the page title; Back returns focus to the line.
+- Every main-view state fits without scrolling (tallest: "See what changed" open, 586px).
+  Nothing overflows 360px (checked in every preview frame).
+
+**Focus Mode**
+- Toolbar: mark + site name | previous, Play (56px circle, primary), next | "Aa", Close.
+  "Aa" is a disclosure (aria-expanded/controls) for a panel with text size (slider),
+  theme (radios with swatches) and reading speed (slider). Escape in the panel closes it,
+  returns focus to "Aa" and stops propagation so Focus Mode stays open; clicking outside or
+  tabbing out also closes it. Changes apply immediately and are reported via `onSettingsChange`.
+- 4px reading-progress bar (scroll position) under the toolbar; reading time in the byline line
+  (`readingMinutes()`, 230 words per minute).
+- Each theme sets `color-scheme` so native sliders, radios and scrollbars match.
+- Below 640px: site name and "Close" become visually hidden; toolbar stays one row down to ~360px.
+- Article column, themes and highlight styles unchanged from revision 1.
+
+**Settings**: max 720px, section titles outside the cards (like Chrome's settings), one card
+per section, label + helper text for every control, theme picker cards kept (tinted, accent
+ring when selected), credits for the font and icons under Privacy.
+
+**Design preview**: `preview/` (Vite, dev only). `frame.html?screen=…` renders one screen per
+frame and reports its height with a ResizeObserver; Focus Mode renders in a shadow root.
 
 ## Legacy code (`legacy/android-v1`, `legacy/android-v2`)
 Code is in `app/src/main/java/com/example/cleanview/` (MainActivity.java, FocusAdapter.java).
@@ -251,11 +285,12 @@ src/
   focus/        model.ts · view.ts · focus.css (Phase 2) · overlay.ts · extract.ts · build.ts
   speech/       sentences.ts · player.ts · highlight.ts
   shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts
-  ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts · popup/ · options/
-  assets/       icon.svg · icon-small.svg
+  ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
+  assets/       brand.ts (icon concepts as data)
 preview/        design preview (dev only): index.html · frame.html · sample-data.ts
 scripts/        build-icons.mjs · copy-fonts.mjs
-public/fonts/   Atkinson Hyperlegible Next woff2 files + OFL.txt
+public/fonts/   Atkinson Hyperlegible Next woff2 files
+public/licenses/ OFL (font) and ISC (Lucide) license texts
 public/icon/    16, 32, 48, 128 PNGs (from a detailed SVG and a simplified small-size SVG)
 tests/unit/     *.test.ts
 tests/fixtures/ legacy-bugs, controls, images (incl. lazy-loaded + hidden), aria, headings,
@@ -299,3 +334,11 @@ legacy/         reference only, excluded from the build
   (`npm run design`), contrast tests (104 tests pass). The toolbar popup in the extension is still
   the Phase 1 placeholder; the real popup switches to the new view when it's wired in Phase 3.
   The contrast test caught Focus Mode light's Play button at 6.2:1 and it was darkened to #1546B5.
+  Pushed.
+- **Phase 2 revision 2: built (2026-11-16), waiting for the user's review and icon choice.**
+  User feedback applied: larger type, one card level, navy brand, Lucide icons, motion,
+  popup restructure (status, tiles, one number, can't-fix details page), Focus Mode toolbar
+  with "Aa" panel + progress + reading time, Chrome-style settings, three icon concepts.
+  Fixed the horizontal-scrollbar bug (fixed-width body + frame scrollbars; now fluid content,
+  inner scroll area, ResizeObserver-sized frames) and native controls using the wrong color
+  scheme in Focus Mode. 145 tests pass.

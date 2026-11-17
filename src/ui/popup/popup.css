@@ -1,126 +1,320 @@
-/* Popup layout. Width is fixed by Chrome's popup frame; 360px keeps lines short. */
+/*
+ * Popup layout. Chrome sizes the popup to the body and caps it at 600px tall,
+ * so the header stays put and only .popup-body scrolls (the main page never
+ * needs to; the issues page might). Everything inside is fluid, so a scrollbar
+ * can never push content past 360px.
+ */
+
+html {
+  font-size: var(--text-base); /* 15px */
+}
 
 body {
   width: 360px;
+  overflow: hidden;
 }
 
-/* Chrome caps popups at 600px tall; the default view (page check collapsed)
-   is kept under that so it never needs to scroll. */
+.popup {
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+}
+
 .popup-header {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-3) var(--space-2) var(--space-4);
-}
-.popup-header h1 {
-  font-size: var(--text-xl);
-  line-height: 1.2;
-}
-.popup-header .logo svg {
-  width: 30px;
-  height: 30px;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3) var(--space-1) var(--space-4);
 }
 
-.popup-main {
+.popup-title {
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.popup-body {
   display: grid;
-  gap: 10px;
-  padding: 0 var(--space-4) var(--space-4);
-}
-
-/* Site switch */
-.site-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  min-height: 0;
+  padding: var(--space-1) var(--space-4) var(--space-4);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
-.site-text {
-  display: grid;
+
+/* ---------- Status ---------- */
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: 14px var(--space-4);
+}
+.status-text {
+  flex: 1;
   min-width: 0;
+  display: grid;
+  gap: 2px;
 }
-.site-host {
+.status-host {
+  font-size: var(--text-md);
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
-
-.popup-actions {
-  display: grid;
-  gap: var(--space-2);
-}
-
-/* Fixed on this page */
-.card-head {
+.status-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4) var(--space-2);
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
-.badge-accent {
-  background: var(--accent-soft);
-  color: var(--on-accent-soft);
+.status-note {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
-.card-empty {
-  padding: 0 var(--space-4) var(--space-4);
+.btn-small {
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+}
+.btn-block {
+  width: 100%;
 }
 
-.count-list {
-  padding: 0 var(--space-4) var(--space-3);
+/* ---------- Tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
-.count-list li {
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 84px;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+.tile:hover {
+  background: var(--accent-soft-hover);
+}
+.tile:active {
+  transform: scale(0.98);
+}
+.tile-icon {
+  width: 28px;
+  height: 28px;
+}
+.tile-label {
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* ---------- This page: fixes + issues ---------- */
+
+.page-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px var(--space-4) var(--space-3);
+}
+
+.fix-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.fix-number {
+  font-size: var(--text-3xl);
+  font-variant-numeric: tabular-nums;
+}
+.fix-none {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+.fix-none .icon {
+  color: var(--accent);
+}
+
+.fix-details > summary {
+  width: fit-content;
+  padding: 0 var(--space-1);
+  margin-inline-start: calc(-1 * var(--space-1));
+}
+.fix-details[open] > .tint-list {
+  margin-top: var(--space-1);
+}
+
+/* Rows grouped on a tint instead of separated by borders */
+.tint-list {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-1);
+  border-radius: var(--radius-control);
+  background: var(--tint);
+}
+.tint-list li {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 6px 0;
-  line-height: 1.4;
-  border-top: 1px solid var(--border);
-}
-.count-list li:first-child {
-  border-top: 0;
+  padding: 4px var(--space-2);
+  font-size: var(--text-sm);
 }
 .count {
+  flex: none;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-/* Page check */
-.page-check > summary .badge {
-  font-weight: 400;
-}
-.page-check-body {
-  padding: 0 var(--space-4) var(--space-2);
-}
-.page-check-body .count-list {
-  padding: 0 0 var(--space-2);
-}
-.subhead {
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-1);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-muted);
-}
-.issue-list {
-  margin: 0 0 var(--space-2);
-  padding-inline-start: var(--space-5);
-}
-.issue-list li {
-  padding: var(--space-1) 0;
-}
-.all-clear {
+.issues-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) 0 var(--space-2);
+  width: 100%;
+  min-height: 48px;
+  margin-top: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--tint);
+  color: var(--text);
+  font-weight: 400;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
-.all-clear svg {
-  width: 20px;
-  height: 20px;
+button.issues-row:hover {
+  background: var(--tint-strong);
+}
+button.issues-row:active {
+  transform: scale(0.99);
+}
+.issues-row > span {
+  flex: 1;
+}
+.issues-row.is-clear {
+  cursor: default;
+  font-weight: 400;
+}
+.issues-row .icon {
+  color: var(--text-muted);
+}
+.issues-row.is-clear .icon {
   color: var(--accent);
 }
-.small {
+
+/* ---------- Message (can't run here) ---------- */
+
+.message {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-4);
+}
+.message-icon {
+  grid-row: span 2;
+  width: 24px;
+  height: 24px;
+  color: var(--text-muted);
+}
+.message-title {
+  font-size: var(--text-md);
+  line-height: 1.35;
+}
+.message-body {
+  color: var(--text-muted);
   font-size: var(--text-sm);
-  margin-bottom: var(--space-2);
+}
+
+/* ---------- Issues page ---------- */
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  margin-inline-start: calc(-1 * var(--space-2));
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+}
+.btn-back:hover {
+  background: var(--tint-strong);
+}
+
+.issues-title:focus {
+  outline: none;
+}
+.issues-title:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.issues-intro {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.issue-group {
+  display: grid;
+  gap: var(--space-2);
+}
+.group-title {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.issue-list {
+  display: grid;
+  gap: var(--space-2);
+}
+.issue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.issue-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.issue-plain {
+  font-weight: 700;
+}
+.issue-tech {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.issue-more {
+  padding: 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }

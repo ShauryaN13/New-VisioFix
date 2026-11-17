@@ -2,6 +2,7 @@ import '@/ui/fonts.css';
 import '@/ui/tokens.css';
 import '@/ui/base.css';
 import './gallery.css';
+import { CHOSEN_ICON, ICON_CONCEPTS } from '@/assets/brand';
 import { h } from '@/ui/dom';
 
 /** Builds the gallery of frames. Each frame reports its height so popups show at full length. */
@@ -23,7 +24,8 @@ function frame(spec: FrameSpec): HTMLElement {
     title: spec.label,
     'data-frame-id': id,
     'data-fixed': spec.height ? 'true' : null,
-    style: `width:${spec.width === '100%' ? '100%' : `${spec.width}px`};height:${spec.height ?? 300}px`,
+    scrolling: spec.height ? null : 'no',
+    style: `width:${spec.width === '100%' ? '100%' : `${spec.width}px`};height:${spec.height ?? 200}px`,
   });
   return h('figure', { class: 'shot' }, iframe, h('figcaption', null, spec.label));
 }
@@ -38,21 +40,41 @@ function section(id: string, title: string, intro: string, ...content: HTMLEleme
   );
 }
 
-/** A strip of icons on a toolbar-colored background (Chrome's light and dark toolbars). */
-function iconRow(bg: string, fg: string, label: string): HTMLElement {
-  const cell = (src: string, size: number, caption: string, extra?: string) =>
+/** One concept on Chrome's light and dark toolbar colors, at every size. */
+function conceptCard(conceptId: string): HTMLElement {
+  const concept = ICON_CONCEPTS.find((c) => c.id === conceptId)!;
+  const strip = (bg: string, fg: string, label: string) =>
     h(
-      'span',
-      { class: 'icon-cell', style: `color:${fg}` },
-      h('img', { src, width: size, height: size, class: extra, alt: '' }),
-      h('span', null, caption),
+      'div',
+      { class: 'icon-strip', style: `background:${bg};color:${fg}` },
+      h('span', { class: 'icon-strip-label' }, label),
+      ...[16, 32, 48, 128].map((size) =>
+        h(
+          'span',
+          { class: 'icon-cell' },
+          h('img', { src: `/concepts/${concept.id}-${size}.png`, width: size, height: size, alt: '' }),
+          h('span', null, `${size}`),
+        ),
+      ),
+      h(
+        'span',
+        { class: 'icon-cell' },
+        h('img', { src: `/concepts/${concept.id}-16.png`, width: 64, height: 64, class: 'pixelated', alt: '' }),
+        h('span', null, '16 at 4×'),
+      ),
     );
   return h(
-    'div',
-    { class: 'icon-row', style: `background:${bg}` },
-    h('span', { class: 'icon-row-label', style: `color:${fg}` }, label),
-    ...[16, 32, 48, 128].map((size) => cell(`/icon/${size}.png`, size, `${size}px`)),
-    cell('/icon/16.png', 64, '16px at 4×', 'pixelated'),
+    'article',
+    { class: `concept card${concept.id === CHOSEN_ICON ? ' is-chosen' : ''}` },
+    h(
+      'div',
+      { class: 'concept-head' },
+      h('h3', null, concept.name),
+      concept.id === CHOSEN_ICON && h('span', { class: 'chip' }, 'Recommended'),
+    ),
+    h('p', { class: 'muted' }, concept.description),
+    strip('#f1f3f4', '#3c4043', 'Light toolbar'),
+    strip('#35363a', '#e8eaed', 'Dark toolbar'),
   );
 }
 
@@ -60,55 +82,56 @@ const gallery = document.getElementById('gallery') as HTMLElement;
 gallery.append(
   section(
     'icon',
-    'Icon',
-    'A yellow eye on a near-black tile, the original app’s high-contrast signature, with a check mark in the iris. 16px and 32px use a simplified drawing without the check, so it stays crisp in the toolbar.',
-    iconRow('#f1f3f4', '#202124', 'Light toolbar'),
-    iconRow('#202124', '#e8eaed', 'Dark toolbar'),
+    'Icon concepts',
+    'Three directions on the deep navy tile, at every size Chrome uses, on its light and dark toolbars. 16 and 32px use a simplified drawing. The recommended one is already used for the logo mark in the screens below.',
+    h('div', { class: 'concepts' }, ...ICON_CONCEPTS.map((c) => conceptCard(c.id))),
   ),
   section(
     'popup',
     'Popup',
-    'Light and dark follow the system setting. Page check is shown expanded here; it starts collapsed.',
+    'Light and dark follow the system setting. Status first, two actions, one number. “See what changed” starts collapsed (shown open in the third frame).',
     h(
       'div',
       { class: 'row' },
-      frame({ label: 'Popup, light', query: 'screen=popup&theme=light&state=ready&open=1', width: 360 }),
-      frame({ label: 'Popup, dark', query: 'screen=popup&theme=dark&state=ready&open=1', width: 360 }),
-      frame({ label: 'Popup, dark, page check collapsed', query: 'screen=popup&theme=dark&state=ready', width: 360 }),
+      frame({ label: 'Popup, light', query: 'screen=popup&theme=light&state=ready', width: 360 }),
+      frame({ label: 'Popup, dark', query: 'screen=popup&theme=dark&state=ready', width: 360 }),
+      frame({ label: '“See what changed” open', query: 'screen=popup&theme=light&state=ready&open=1', width: 360 }),
+      frame({ label: 'Can’t-fix details, light', query: 'screen=popup&theme=light&state=ready&page=issues', width: 360 }),
+      frame({ label: 'Can’t-fix details, dark', query: 'screen=popup&theme=dark&state=ready&page=issues', width: 360 }),
     ),
   ),
   section(
     'popup-states',
     'Popup states',
-    'What the popup shows when there’s nothing to fix, when repairs are off, and on pages VisioFix can’t reach.',
+    'Nothing to fix, repairs paused, and pages VisioFix can’t reach. Every main view fits in Chrome’s 600px popup without scrolling.',
     h(
       'div',
       { class: 'row' },
-      frame({ label: 'Nothing needed fixing', query: 'screen=popup&theme=light&state=clean&open=1', width: 360 }),
-      frame({ label: 'Repairs off for this site', query: 'screen=popup&theme=light&state=site-off', width: 360 }),
-      frame({ label: 'Repairs off everywhere', query: 'screen=popup&theme=dark&state=off-everywhere', width: 360 }),
-      frame({ label: 'Can’t run on this page', query: 'screen=popup&theme=light&state=unsupported', width: 360 }),
-      frame({ label: 'Tab needs a reload', query: 'screen=popup&theme=dark&state=needs-reload', width: 360 }),
+      frame({ label: 'Nothing needed fixing', query: 'screen=popup&theme=light&state=clean', width: 360 }),
+      frame({ label: 'Paused on this site', query: 'screen=popup&theme=dark&state=site-off', width: 360 }),
+      frame({ label: 'Paused everywhere', query: 'screen=popup&theme=light&state=off-everywhere', width: 360 }),
+      frame({ label: 'Can’t run on this page', query: 'screen=popup&theme=dark&state=unsupported', width: 360 }),
+      frame({ label: 'Tab needs a reload', query: 'screen=popup&theme=light&state=needs-reload', width: 360 }),
     ),
   ),
   section(
     'focus',
     'Focus Mode',
-    'Full-screen reading view over the page. High contrast is the default. The first frame shows read-aloud playing: the highlighted sentence, and the “read from here” button that appears when you point at a paragraph.',
-    frame({ label: 'Focus Mode, high contrast, reading', query: 'screen=focus&theme=contrast&variant=reading', width: '100%', height: 760 }),
-    frame({ label: 'Focus Mode, dark', query: 'screen=focus&theme=dark&variant=reading', width: '100%', height: 760 }),
-    frame({ label: 'Focus Mode, light', query: 'screen=focus&theme=light&variant=reading', width: '100%', height: 760 }),
+    'Full-screen reading view over the page. High contrast is the default. The first frame shows read-aloud playing: the highlighted sentence, the reading-progress bar, and the “read from here” button that appears when you point at a paragraph. Try the Aa button: Escape closes its panel and returns to it.',
+    frame({ label: 'High contrast, reading', query: 'screen=focus&theme=contrast&variant=reading', width: '100%', height: 720 }),
+    frame({ label: 'Dark, Aa panel open', query: 'screen=focus&theme=dark&variant=panel', width: '100%', height: 720 }),
+    frame({ label: 'Light', query: 'screen=focus&theme=light&variant=reading', width: '100%', height: 720 }),
     h(
       'div',
       { class: 'row' },
-      frame({ label: 'Not an article: fallback notice (dark)', query: 'screen=focus&theme=dark&variant=fallback', width: 640, height: 620 }),
-      frame({ label: 'Narrow window (high contrast)', query: 'screen=focus&theme=contrast&variant=reading', width: 420, height: 620 }),
+      frame({ label: 'Not an article: fallback notice (dark)', query: 'screen=focus&theme=dark&variant=fallback', width: 640, height: 560 }),
+      frame({ label: 'Narrow window, Aa panel open (high contrast)', query: 'screen=focus&theme=contrast&variant=panel', width: 380, height: 640 }),
     ),
   ),
   section(
     'settings',
     'Settings',
-    'The settings page, light and dark.',
+    'Section titles outside the cards, helper text under every control.',
     frame({ label: 'Settings, light', query: 'screen=options&theme=light', width: '100%' }),
     frame({ label: 'Settings, dark', query: 'screen=options&theme=dark', width: '100%' }),
   ),

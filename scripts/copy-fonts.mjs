@@ -21,5 +21,6 @@ for (const subset of ['latin', 'latin-ext']) {
   }
 }
 // The SIL Open Font License requires the license to travel with the fonts.
-copyFileSync(`${pkg}/LICENSE`, `${outDir}/OFL.txt`);
-console.log('public/fonts/OFL.txt');
+mkdirSync(`${root}public/licenses`, { recursive: true });
+copyFileSync(`${pkg}/LICENSE`, `${root}public/licenses/atkinson-hyperlegible-next-OFL.txt`);
+console.log('public/licenses/atkinson-hyperlegible-next-OFL.txt');

@@ -1,53 +1,67 @@
 /*
  * Design tokens for the popup and settings page.
  *
- * Colors use light-dark(LIGHT, DARK), so each token is defined once and follows
- * the system setting. `data-theme` on <html> forces one side (used by the design
- * preview). Contrast for every text/background pair is checked by
- * tests/unit/contrast.test.ts: AA (4.5:1) for text, 3:1 for control outlines.
+ * Colors use light-dark(LIGHT, DARK), so each token is written once and follows
+ * the system setting. `data-theme` on <html> forces one side (design preview).
+ * tests/unit/contrast.test.ts checks every text/background pair: AA (4.5:1) for
+ * text, 3:1 for control outlines and focus rings.
  *
- * Accent: a deep blue. The original app's yellow stays as a brand detail on the
- * near-black logo tile only, where it passes contrast (14.7:1); yellow on white
- * would fail.
+ * Brand: deep navy (#0B1F4D) is the icon tile and logo mark. Blue is the one
+ * interactive accent. Yellow appears only in the icon and Focus Mode's High
+ * contrast theme.
  */
 :root {
   color-scheme: light dark;
 
-  /* Surfaces */
-  --bg: light-dark(#f3f5f8, #0f1216);
-  --surface: light-dark(#ffffff, #181c22);
-  --surface-2: light-dark(#eceff4, #222831);
+  /* Surfaces: page, card, and a subtle tint for groups inside a card */
+  --bg: light-dark(#f2f4f7, #0e1116);
+  --surface: light-dark(#ffffff, #191d24);
+  --tint: light-dark(#f2f5fa, #222832);
+  --tint-strong: light-dark(#e8edf5, #2a313c);
 
   /* Text */
-  --text: light-dark(#141821, #edf0f5);
-  --text-muted: light-dark(#4a5367, #b0b8c6);
+  --text: light-dark(#121721, #eef1f6);
+  --text-muted: light-dark(#4a5367, #aab3c2);
 
-  /* Lines. --border is decorative (card edges); --control-border outlines
-     interactive controls and must reach 3:1 against the surface. */
-  --border: light-dark(#dce1e8, #2c323c);
-  --control-border: light-dark(#727c8f, #7e889a);
+  /* Lines: --divider is decorative; --control-border outlines interactive
+     controls and must reach 3:1 against the surface. */
+  --divider: light-dark(#e4e8ee, #2a303a);
+  --control-border: light-dark(#737d90, #7f899b);
 
-  /* Accent (deep blue) */
+  /* Accent (interactive) */
   --accent: light-dark(#1a56db, #8ab4ff);
   --accent-hover: light-dark(#1546b5, #a9c8ff);
+  --accent-press: light-dark(#123d9e, #c2d8ff);
   --on-accent: light-dark(#ffffff, #0b1530);
-  --accent-soft: light-dark(#e6eefd, #1d2a45);
+  --accent-soft: light-dark(#e7eefc, #1e2b46);
+  --accent-soft-hover: light-dark(#d9e5fb, #26365a);
   --on-accent-soft: light-dark(#1546b5, #d3e2ff);
-
-  /* Focus ring: same blue, always 3px with a 2px gap */
   --focus: light-dark(#1a56db, #8ab4ff);
 
-  /* Brand (logo tile only) */
-  --brand-tile: #0b0b0c;
+  /* Status dot ("Repairing this page") */
+  --status-on: light-dark(#1a56db, #8ab4ff);
+
+  /* Brand */
+  --brand-navy: #0b1f4d;
   --brand-yellow: #ffd400;
 
-  /* Type */
+  /* Shadows (light mode only; dark cards stand apart by their lighter surface) */
+  --shadow-color: light-dark(rgb(16 24 40 / 8%), transparent);
+  --shadow-color-soft: light-dark(rgb(16 24 40 / 5%), transparent);
+  --shadow-card: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color-soft);
+  --shadow-raised: 0 2px 4px var(--shadow-color), 0 8px 24px var(--shadow-color);
+
+  /* Type scale (base size is set per page: popup 15px, settings 16px).
+     Nothing smaller than 13px. */
   --font: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 13px;
   --text-sm: 14px;
+  --text-base: 15px;
   --text-md: 16px;
   --text-lg: 18px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
 
   /* Spacing (4px grid) */
   --space-1: 4px;
@@ -59,15 +73,14 @@
   --space-8: 32px;
   --space-10: 40px;
 
-  /* Shape */
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --shadow: light-dark(0 1px 2px rgb(16 24 40 / 6%), 0 0 0 transparent);
+  /* One radius system */
+  --radius-card: 12px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
 
-  /* Motion (turned off under prefers-reduced-motion in base.css) */
+  /* Motion: subtle, and off under prefers-reduced-motion (base.css) */
   --ease: cubic-bezier(0.2, 0, 0, 1);
-  --duration: 160ms;
+  --duration: 140ms;
 }
 
 :root[data-theme='light'] {
