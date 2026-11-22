@@ -2,11 +2,14 @@ import type { EngineStats } from '@/repair/engine';
 import type { PageReport } from './report';
 
 /**
- * Messages between the popup and the content script.
+ * Messages to the content script.
  *
  *   - One-off: the popup sends { type: 'visiofix:status' } with
  *     tabs.sendMessage; the content script replies with a StatusReply. A
  *     failure means there's no content script in the tab (needs a reload).
+ *   - Focus Mode: the popup ('open') and the keyboard shortcut in the
+ *     background ('toggle') send a FocusMessage; the reply says whether
+ *     Focus Mode is open afterwards.
  *   - Live: the popup opens a port named REPORT_PORT with tabs.connect; the
  *     content script posts a StatusReply right away and again whenever the
  *     page's fixes change, until the popup closes.
@@ -18,7 +21,17 @@ export interface StatusMessage {
   type: 'visiofix:status';
 }
 
-export type VisioFixMessage = StatusMessage;
+export interface FocusMessage {
+  type: 'visiofix:focus';
+  action: 'open' | 'toggle' | 'close';
+}
+
+export type VisioFixMessage = StatusMessage | FocusMessage;
+
+export interface FocusReply {
+  ok: boolean;
+  open: boolean;
+}
 
 export interface StatusReply {
   ok: true;

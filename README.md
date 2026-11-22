@@ -8,7 +8,7 @@ A Chrome extension for visually impaired users. It:
 
 Edge installs it from the Chrome Web Store too.
 
-> Status: in development (Phase 3 of 6 done). Not yet published.
+> Status: in development (Phase 4 of 6 done). Not yet published.
 
 ## Not an "accessibility overlay"
 Site-injected overlays (scripts a site owner adds for every visitor) have a bad reputation with

@@ -76,7 +76,7 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm run design` | Design preview (dev only) at http://localhost:5180: every screen with sample data |
 | `npm run icons` | Renders the icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png` |
 | `npm run fonts` | Copies the used woff2 files to `public/fonts/` and the OFL to `public/licenses/` |
-| `npm run fixtures` | Serves `tests/fixtures/` at http://localhost:5181 (tiny Node script, no dependency) |
+| `npm run fixtures` | Serves `tests/fixtures/` at http://localhost:5181 (tiny Node script, no dependency). `?csp=strict` adds a locked-down Content Security Policy |
 
 **Dependencies** (✓ = installed)
 | Package | Ships? | Reason |
@@ -88,8 +88,8 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | ✓ `web-ext` 10.8.0 | no | Lets `npm run dev` open Chrome with VisioFix loaded (kept by user decision) |
 | ✓ `@fontsource/atkinson-hyperlegible-next` 5.3.0 | font files only | Source of the font (Braille Institute, 2025, OFL). Dev dependency: `npm run fonts` copies 8 woff2 files (Latin + Latin Ext, 400/700, normal/italic) into `public/fonts/`, which are committed and ship |
 | ✓ `@resvg/resvg-js` 2.6.2 | no | Renders the SVG icon to PNGs (`npm run icons`) |
-| `dom-accessibility-api` 0.7.x | yes | Phase 3. Accessible-name computation per spec |
-| `@mozilla/readability` 0.6.0 | yes | Phase 4. Focus Mode extraction (Firefox Reader View's engine) |
+| ✓ `dom-accessibility-api` 0.7.1 | yes | Accessible-name computation per spec (repairs). MIT, license in `public/licenses/` |
+| ✓ `@mozilla/readability` 0.6.0 | yes | Focus Mode extraction (Firefox Reader View's engine). Apache 2.0, license + full Apache text in `public/licenses/readability.txt` |
 
 No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prettier unless asked.
 
@@ -99,9 +99,12 @@ No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prett
   `src/shared/matches.ts`): needed to repair pages automatically and open Focus Mode on any site
   you visit. Nothing is collected or sent. Expect the "Read and change all your data on all
   websites" warning and a slower first review.
-- Phase 4: font files listed in `web_accessible_resources` (with `use_dynamic_url`) so Focus Mode
-  can load its bundled font.
+- `web_accessible_resources`: only the 8 font files (`FONT_FILES` in `src/focus/font.ts`), with
+  `use_dynamic_url` (the address changes every session, so sites can't probe it to detect
+  VisioFix): lets Focus Mode show its bundled font on the page.
+- `commands`: `toggle-focus-mode` (Alt+Shift+F) since Phase 4; Phase 5 adds read-aloud keys.
 - Not requested: `tabs`, `scripting`, `activeTab`, `tts`. Commands is a manifest key, not a permission.
+  `commands.onCommand` passes the active tab, so the shortcut needs no `tabs` permission.
   Tabs opened before install get a "Reload this page" button in the popup instead of `scripting`.
 - Check the production manifest after builds: WXT adds `tabs`/`scripting` only in dev mode.
 
@@ -163,20 +166,66 @@ No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prett
 **d. Heading check** (report only, computed when the popup opens): skipped levels, missing h1,
 empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not flagged.
 
-### 2. Focus Mode
+### 2. Focus Mode — built in Phase 4
+**Overlay** (`src/focus/overlay.ts`, `FocusMode` class; the content script owns one)
 - Native `<dialog>` + `showModal()` inside a closed shadow root (WXT `createShadowRootUi`,
-  `isolateEvents`). The page behind becomes inert for Tab and screen readers; Escape closes; it
-  sits in the top layer. Restore focus to the previously focused element on close. `all: initial`
-  blocks page CSS. Our host element is the only change to the page and is removed on close.
-- Font: `@font-face` inside a shadow root doesn't apply in Chrome, so register the font at page
-  level via the FontFace API under a unique family ("VisioFix Atkinson"), loaded from the bundled
-  file. If a site blocks it, fall back to system sans-serif. Verify in Phase 4.
-- Extraction: Readability on a clone of the document, only when opened. Output goes through our
-  allow-list builder: h1–h6 (levels kept), p, ul/ol/li, blockquote, pre/code, figure/figcaption,
-  img with alt, links inline in paragraphs, strong/em. Everything else becomes text; no scripts,
-  styles or handlers. Fallback for non-articles: headings/paragraphs/lists from
-  `main`/`[role=main]`/`article`/`body`, skipping nav/aside/footer by element and role (never
-  class substrings), with a visible notice.
+  `isolateEvents`, CSS from `focus.css?inline`). Host `<visiofix-ui>` is appended to `<html>`
+  (outside `<body>`, so frameworks that own the body's children don't trip over it); the repair
+  engine skips it (`OWN_UI_TAG`). The page behind is inert for Tab and screen readers; Escape
+  closes (native dialog `close` event → teardown); it sits in the top layer. Focus goes to the
+  article title (`h1 tabindex=-1`, no focus ring: it isn't a control), so screen readers start
+  there and arrow keys scroll the article. On close, focus returns to where it was.
+  `all: initial` blocks page CSS. The host is the only change to the page and is removed on close.
+- Opened by the popup tile (`visiofix:focus` `open`, then the popup closes) or Alt+Shift+F
+  (background `commands.onCommand` → `toggle`). Works whether repairs are on or off.
+- Settings: theme/text size in `focusPrefsItem`, speed in `speechPrefsItem`; "Aa" changes are
+  saved, and changes made elsewhere while open apply live.
+- Font: `@font-face` inside a shadow root doesn't apply in Chrome, so the FontFace API registers
+  "VisioFix Atkinson" on the page's `document.fonts` on open and removes it on close
+  (`src/focus/font.ts`; unicode ranges match `fonts.css`, checked by a test). Verified: it loads
+  even under `font-src 'none'` (content-script fonts aren't subject to the page's CSP); only the
+  faces the text needs download.
+- Play/previous/next are in the toolbar but do nothing until Phase 5.
+
+**Extraction** (`src/focus/extract.ts`, only when opened, never changes the page)
+1. Copy the document. Walking the live page and the copy in parallel (same element order),
+   remove what has computed `display: none` (Readability only sees inline styles), mark inline
+   elements shown as blocks (`data-vf-block`) and inline elements whose ≥3px margin stands in for
+   a space (`data-vf-gap`), so "in Kyiv" + "and" doesn't become "in Kyivand". Marks are on the
+   copy only.
+2. Listing check: not `og:type` article, and ≥6 headings (and ≥ half) link to other pages
+   → list of stories (BBC News front page: 45 of 51) → fallback.
+3. Otherwise, if `isProbablyReaderable()` (Firefox's Reader View check), lift headings out of
+   wrapper divs with ≤20 extra characters (Wikipedia's "[edit]" wrappers made Readability drop
+   every section heading), then Readability on a second copy with `serializer: el => el` (no HTML
+   string is ever parsed). Readability is skipped when the checks fail (it took 1.5s on the
+   stress page for a result that was thrown away).
+4. Keep the article if ≥500 characters, ≤50% link text and not mostly linked headlines.
+5. Fallback: `main`/`[role=main]` (≥200 chars), else a single `article`, else `body`; skipping
+   nav/aside/footer and navigation/complementary/contentinfo/search/menu/dialog roles (never
+   class substrings), with a visible notice.
+- Title: Readability's, but the page's only `<h1>` when the title is that `<h1>` + separator + the
+  site's name (og:site_name or in the hostname): "Braille - Wikipedia" → "Braille". The first
+  heading is dropped if it repeats the title.
+
+**Allow-list builder** (`src/focus/build.ts`): output is plain data (`FocusDoc`), the view creates
+fresh elements, so no scripts, styles, classes or handlers can come along.
+- Kept: h1–h6 and `role=heading` (levels kept), p, ul/ol (nested), blockquote, pre (spacing
+  kept), figure + figcaption, images with a description (alt, aria-label, aria-labelledby), and
+  inline: links, strong/b, em/i, code/kbd, del/s, sup/sub, `<br>` (as a line break, CSS
+  `pre-line`). Everything else becomes text. Text outside `<p>` becomes a paragraph.
+- Left out: scripts, styles, form controls and their labels, embeds, svg/math, `[hidden]`,
+  `[aria-hidden=true]`, dialogs, always nav/search/menus; images with no description (never made
+  up) or decorative (`alt=""`) unless captioned; separators with no letters ("|", "•").
+- Links: only http(s)/mailto/tel; `javascript:` and same-page jumps (#footnotes) become text.
+  A link wrapping a card makes its first heading the link. Icon-only links use only the site's
+  own aria-label, not one VisioFix's repairs added (clutter in a reading view).
+- Tables: data tables (Readability's rules: th/caption/colgroup → data; nested tables → layout)
+  become a list, one item per row, labelled by the header row ("Monday: 9–9",
+  "Name: Ana · Age: 34"); rows that are only a picture show the picture; layout tables are read
+  cell by cell.
+- Stops at 4,000 blocks with a notice; an empty result shows "didn't find any text".
+- Images get a white backdrop (dark drawings on transparent backgrounds vanish on dark themes).
 - Toolbar: text size, theme, play/pause, speed, close.
 - Themes: **High Contrast** (default): bg #000000, H1 #FFFF00, H2 #FFD700, body #FFFFFF,
   links #00FFFF underlined. **Dark**. **Light** (soft off-white, not pure white).
@@ -191,8 +240,9 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
 - Start from the top, from a paragraph's play button, or (keyboard) from the first paragraph on
   screen. Previous/next sentence controls.
 - Proposed shortcuts (max 4 suggested in Chrome; users rebind at chrome://extensions/shortcuts):
-  Alt+Shift+F Focus Mode, Alt+Shift+P play/pause, Alt+Shift+. / Alt+Shift+, next/previous
-  sentence. Check conflicts on Windows, macOS, ChromeOS in Phase 5.
+  Alt+Shift+F Focus Mode (registered in Phase 4), Alt+Shift+P play/pause, Alt+Shift+. /
+  Alt+Shift+, next/previous sentence. Check conflicts on Windows, macOS, ChromeOS in Phase 5
+  (on a Mac, Option+Shift+F types "Ï").
 
 ### 4. Popup and settings
 - Popup and settings follow system light/dark. Font: Atkinson Hyperlegible Next.
@@ -260,7 +310,7 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
 
 **Settings**: max 720px, section titles outside the cards (like Chrome's settings), one card
 per section, label + helper text for every control, theme picker cards kept (tinted, accent
-ring when selected), credits for the font and icons under Privacy.
+ring when selected), credits for the font, icons, Readability and dom-accessibility-api under Privacy.
 
 **Design preview**: `preview/` (Vite, dev only). `frame.html?screen=…` renders one screen per
 frame and reports its height with a ResizeObserver; Focus Mode renders in a shadow root.
@@ -295,7 +345,7 @@ Also found in review:
 src/
   entrypoints/  background.ts · content/index.ts · popup/ · options/ (open_in_tab)
   repair/       engine.ts · rules.ts · changes.ts · a11y.ts · link-names.ts · roles.ts · headings.ts
-  focus/        model.ts · view.ts · focus.css (Phase 2) · overlay.ts · extract.ts · build.ts
+  focus/        model.ts · view.ts · focus.css · overlay.ts · extract.ts · build.ts · font.ts
   speech/       sentences.ts · player.ts · highlight.ts
   shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts · commands.ts
   ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
@@ -303,11 +353,11 @@ src/
 preview/        design preview (dev only): index.html · frame.html · sample-data.ts
 scripts/        build-icons.mjs · copy-fonts.mjs · serve-fixtures.mjs
 public/fonts/   Atkinson Hyperlegible Next woff2 files
-public/licenses/ OFL (font) and ISC (Lucide) license texts
+public/licenses/ OFL (font), ISC (Lucide), Apache 2.0 (Readability), MIT (dom-accessibility-api)
 public/icon/    16, 32, 48, 128 PNGs (from src/assets/brand.ts)
-tests/unit/     *.test.ts; repair/ has the engine and rule tests
+tests/unit/     *.test.ts; repair/ has the engine and rule tests, focus/ the extraction and view tests
 tests/fixtures/ index, legacy-bugs, controls, images (lazy, hidden, script-set src), aria, headings,
-                dynamic, stress (Phase 4 adds article, not-article)
+                dynamic, stress, article (+ article.css, also with ?csp=strict), not-article
 store/          listing.md · permissions.md · screenshots/
 legacy/         reference only, excluded from the build
 ```
@@ -329,7 +379,19 @@ legacy/         reference only, excluded from the build
 - Icon-only buttons and images with no caption usually can't be named without guessing; they are
   reported, not fixed. On-device AI descriptions could be a later opt-in, not v1.
 - Shadow DOM is out of scope, and Reddit's current site is largely web components.
-- Readability works poorly on home pages, feeds and web apps; the fallback is rough.
+- Readability works poorly on home pages, feeds and web apps; the fallback is rough (Hacker
+  News reads as table rows; blog.google's front page passes as a short "article" with a byline
+  taken from a card). Bylines are Readability's guess (GitHub READMEs get "dependabot[bot]").
+- Focus Mode opening time (headless Chrome 158, production build, after the first open):
+  articles 20–250ms (BBC, Guardian, MDN, GitHub), Wikipedia "Braille" (9k words) 0.4–0.9s, the
+  stress page 0.6–0.7s; a page busy with its own scripts (the Guardian's ads) can add up to a
+  second. About half is extraction, half laying out the article in `showModal()`. No progress
+  indicator while it works.
+- Words the page separates only with CSS other than margins (padding, `::before` content, grid
+  gaps) can still run together, as they do for screen readers on the page itself.
+- Pages that listen for keys in the capture phase can still see key presses made in Focus Mode
+  (`isolateEvents` stops them bubbling out of the shadow root, which covers most sites).
+- Images inside table cells show as their description, except rows that are only a picture.
 - Voice quality depends on the OS; some systems have few local voices.
 - Gmail mutates constantly: the main performance risk. Not measured (needs a signed-in account);
   the stress fixture (21k elements + constant changes) costs ~0.3s of main thread over 6s, with
@@ -346,6 +408,15 @@ legacy/         reference only, excluded from the build
   `body { font: inherit }`. The design preview (a normal page) can't show this; check real pages.
 - `action.openPopup()` from the service worker works in headless Chrome, which allows
   screenshotting the real popup over a test page.
+- Chrome 158 ignores `--load-extension` (even with `--disable-features=DisableLoadExtensionCommandLineSwitch`).
+  Headless testing: start Chrome with `--remote-debugging-pipe --enable-unsafe-extension-debugging`
+  and call CDP `Extensions.loadUnpacked`. `DOM.getDocument({ pierce: true })` reads Focus Mode's
+  closed shadow root; `Accessibility.getFullAXTree` shows what screen readers get.
+- `web_accessible_resources` with `use_dynamic_url`: `runtime.getURL()` in the content script
+  returns the per-session address, and FontFace loads it fine.
+- Page CSP doesn't affect Focus Mode (verified with `?csp=strict`: no inline styles, no fonts,
+  Trusted Types): WXT's `<style>` in the shadow root, the FontFace load and Readability's
+  innerHTML use (on the copy) all run in the content script's world.
 
 ## Progress
 - **Phase 1: done (2026-11-16).** Legacy v1 extracted to `legacy/android-v1/` (zip deleted),
@@ -382,3 +453,19 @@ legacy/         reference only, excluded from the build
   chrome.commands, popup fonts overridden by Chrome's extension stylesheet, link names dropping
   meaningful queries (Wikipedia "?action=edit"), images whose src is set later never rechecked.
   Focus Mode and Read aloud tiles do nothing yet (Phases 4 and 5).
+- **Phase 4: done (2026-11-21).** Focus Mode opens from the popup tile and Alt+Shift+F: real
+  extraction (Readability 0.6.0 + listing check + fallback), allow-list builder, modal dialog in a
+  closed shadow root, bundled font via FontFace (web-accessible with `use_dynamic_url`), settings
+  saved and followed live. Fixtures `article`, `not-article`, `article?csp=strict`. 249 unit tests.
+  Verified in headless Chrome 158: fixtures match their expected lists; focus starts on the title,
+  Tab stays inside, arrow keys scroll, Escape in "Aa" closes only the panel, Escape closes Focus
+  Mode and focus returns to the page link it came from; the accessibility tree shows only the
+  dialog "Focus Mode" with its headings (page content hidden); the repair engine ignores the host;
+  same result under a strict CSP. Real sites: BBC/Guardian articles, MDN, GitHub README and
+  Wikipedia read as articles; BBC and Guardian front pages, Hacker News fall back with the
+  notice. Found and fixed on real sites: Readability ran (1.5s) on pages it would then reject;
+  home pages read as articles with the site menu; Wikipedia section headings dropped and
+  " - Wikipedia" in titles; infoboxes split into fragments; words joined across spans spaced by
+  margins; VisioFix's own link names shown as text; black-on-transparent images invisible.
+  Also added the missing dom-accessibility-api license (it has shipped since Phase 3).
+  Play/previous/next and the Read aloud tile do nothing yet (Phase 5).

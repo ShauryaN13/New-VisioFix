@@ -8,6 +8,7 @@ const doc = (blocks: FocusDoc['blocks'], title = 'A title'): FocusDoc => ({
   lang: 'en',
   dir: 'ltr',
   isFallback: false,
+  truncated: false,
   blocks,
 });
 

@@ -14,7 +14,7 @@ import {
 
 /**
  * Focus Mode's reading view: toolbar, progress bar and article, built from a
- * FocusDoc. No browser extension APIs. Phase 4 mounts it inside a <dialog>
+ * FocusDoc. No browser extension APIs. overlay.ts mounts it inside a <dialog>
  * in a shadow root on the page; the design preview mounts it in a shadow root
  * inside a frame.
  *
@@ -38,6 +38,8 @@ export interface FocusView {
   scroller: HTMLElement;
   setPlaying(playing: boolean): void;
   setSettings(settings: FocusSettings): void;
+  /** Moves focus to the article title: screen readers start reading there, and arrow keys scroll the article. */
+  focusTitle(): void;
   openPanel(): void;
   closePanel(returnFocus: boolean): void;
   destroy(): void;
@@ -195,23 +197,22 @@ export function renderFocusView(
 
   const minutes = readingMinutes(doc);
   const meta = [doc.siteName, doc.byline, `${minutes} min read`].filter(Boolean).join(' · ');
+  // tabindex -1: not a Tab stop, but focus can be put here when Focus Mode opens.
+  const title = h('h1', { id: titleId, tabindex: -1 }, doc.title);
+  const empty = doc.blocks.length === 0;
   const article = h(
     'article',
     { class: 'vf-article', lang: doc.lang, dir: doc.dir, 'aria-labelledby': titleId },
     h('p', { class: 'vf-meta' }, meta),
-    h('h1', { id: titleId }, doc.title),
-    doc.isFallback &&
-      h(
-        'p',
-        { class: 'vf-notice' },
-        icon('info'),
-        h(
-          'span',
-          null,
-          'This page doesn’t look like an article, so Focus Mode is showing all the main text it found. Some of it may be menus or links.',
-        ),
-      ),
+    title,
+    empty
+      ? notice('Focus Mode didn’t find any text to show on this page.')
+      : doc.isFallback &&
+          notice(
+            'This page doesn’t look like an article, so Focus Mode is showing all the main text it found. Some of it may be menus or links.',
+          ),
     doc.blocks.map(renderBlock),
+    doc.truncated && notice('Focus Mode stopped here because this page is very long.'),
   );
   const scroller = h('div', { class: 'vf-scroll' }, article);
   const root = h('div', { class: 'vf-focus' }, toolbar, progress, scroller);
@@ -298,6 +299,7 @@ export function renderFocusView(
     setSettings: applySettings,
     openPanel,
     closePanel,
+    focusTitle: () => title.focus({ preventScroll: true }),
     destroy() {
       settingsWrap.removeEventListener('keydown', onKeydown);
       settingsWrap.removeEventListener('focusout', onFocusOut);
@@ -306,6 +308,10 @@ export function renderFocusView(
       if (frame) cancelAnimationFrame(frame);
     },
   };
+}
+
+function notice(text: string): HTMLElement {
+  return h('p', { class: 'vf-notice' }, icon('info'), h('span', null, text));
 }
 
 function roundButton(name: 'skipBack' | 'skipForward', label: string, onClick: () => void): HTMLButtonElement {

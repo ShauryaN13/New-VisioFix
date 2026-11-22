@@ -1,6 +1,10 @@
 // Serves tests/fixtures/ at http://localhost:5181 so the fixture pages run
 // over http (VisioFix only runs on http/https pages, not file://).
 // No dependencies. Run with: npm run fixtures
+//
+// ?csp=strict serves a page with a strict Content Security Policy, like
+// locked-down sites: only its own scripts and styles (no inline ones), no
+// fonts at all, and Trusted Types. Focus Mode must still work there.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
@@ -35,8 +39,13 @@ createServer((req, res) => {
   }
   // Slow the "slow image" down so its lazy loading is visible.
   const delay = url.searchParams.has('slow') ? 1500 : 0;
+  const headers = { 'content-type': TYPES[extname(path)] ?? 'application/octet-stream', 'cache-control': 'no-store' };
+  if (url.searchParams.get('csp') === 'strict') {
+    headers['content-security-policy'] =
+      "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'none'; img-src 'self'; require-trusted-types-for 'script'";
+  }
   setTimeout(() => {
-    res.writeHead(200, { 'content-type': TYPES[extname(path)] ?? 'application/octet-stream', 'cache-control': 'no-store' });
+    res.writeHead(200, headers);
     createReadStream(path).pipe(res);
   }, delay);
 }).listen(PORT, '127.0.0.1', () => {

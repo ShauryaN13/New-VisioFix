@@ -113,6 +113,28 @@
   --f-notice-border: #0b4aa8;
 }
 
+/* ---------- Dialog (the real Focus Mode; the design preview has none) ---------- */
+
+/* A modal <dialog> covering the whole window. showModal() puts it in the top
+   layer and makes the page behind it inert for Tab and screen readers. */
+.vf-dialog {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+}
+.vf-dialog:focus {
+  outline: none;
+}
+
 /* ---------- Frame ---------- */
 
 .vf-focus {
@@ -438,6 +460,12 @@
   font-size: 1.75em;
   color: var(--f-h1);
 }
+/* Focus is put on the title when Focus Mode opens, so reading starts there.
+   It isn't a control (not in the Tab order), so no focus ring: on a heading
+   it looks like a mistake. Every control keeps its ring. */
+.vf-article h1:focus {
+  outline: none;
+}
 .vf-article h2 {
   font-size: 1.4em;
   color: var(--f-h2);
@@ -465,6 +493,19 @@
 .vf-article ul,
 .vf-article ol {
   padding-inline-start: 1.4em;
+}
+
+/* Text keeps the page's own line breaks (<br> in addresses and poems).
+   Other whitespace was already collapsed when the article was built. */
+.vf-article p,
+.vf-article li,
+.vf-article figcaption,
+.vf-article h2,
+.vf-article h3,
+.vf-article h4,
+.vf-article h5,
+.vf-article h6 {
+  white-space: pre-line;
 }
 .vf-article li + li {
   margin-top: 0.35em;
@@ -506,6 +547,9 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.3em;
+  /* Most images are drawn for a white page; dark drawings on a transparent
+     background (diagrams, signatures, braille charts) vanish on dark themes. */
+  background: #ffffff;
 }
 .vf-article figcaption {
   margin-top: 0.5em;

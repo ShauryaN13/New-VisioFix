@@ -28,6 +28,7 @@
     "wxt": "0.21.5"
   },
   "dependencies": {
+    "@mozilla/readability": "0.6.0",
     "dom-accessibility-api": "0.7.1"
   }
 }

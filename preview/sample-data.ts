@@ -60,6 +60,7 @@ export const article: FocusDoc = {
   lang: 'en',
   dir: 'ltr',
   isFallback: false,
+  truncated: false,
   blocks: [
     {
       kind: 'paragraph',
@@ -130,6 +131,7 @@ export const fallbackDoc: FocusDoc = {
   lang: 'en',
   dir: 'ltr',
   isFallback: true,
+  truncated: false,
   blocks: [
     { kind: 'heading', level: 2, content: ['Top stories'] },
     {

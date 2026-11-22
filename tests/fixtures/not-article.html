@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Riverside Courier: local news</title>
+    <link rel="stylesheet" href="fixtures.css" />
+    <style>
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        display: block;
+        padding: 0.75rem;
+        border: 1px solid #dde2e8;
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+      }
+      .menu-mobile {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="expect" aria-label="Expected results">
+      <h2>Expected in Focus Mode</h2>
+      <ul>
+        <li>Not an article: the notice "This page doesn't look like an article…" is shown.</li>
+        <li>Title "Riverside Courier: local news".</li>
+        <li>
+          Shown: "Top stories" with each story title as a link (the whole card is a link on the page; only its title
+          is a link in Focus Mode) and its summary as plain text, "Weather", and the numbered "Most read" list.
+        </li>
+        <li>Not shown: the site menu, the hidden mobile menu, the search form, the newsletter sidebar, the footer, and this box.</li>
+      </ul>
+    </aside>
+
+    <header>
+      <a href="/"><img src="assets/logo.svg" alt="Riverside Courier" width="140" height="32" /></a>
+      <nav aria-label="Sections"><a href="/news">News</a> · <a href="/sports">Sports</a> · <a href="/weather">Weather</a></nav>
+      <div class="menu-mobile"><a href="/news">News</a> <a href="/sports">Sports</a></div>
+      <form role="search"><label for="q">Search</label> <input id="q" type="search" /> <button>Go</button></form>
+    </header>
+
+    <main>
+      <section>
+        <h2>Top stories</h2>
+        <div class="cards">
+          <a class="card" href="/news/library">
+            <h3>Library adds evening hours and a quiet reading room</h3>
+            <p>The library will stay open until 9 p.m. on weekdays starting next month.</p>
+          </a>
+          <a class="card" href="/news/bridge">
+            <h3>Water Street bridge reopens after repairs</h3>
+            <p>Drivers can use both lanes again after eight months of work.</p>
+          </a>
+          <a class="card" href="/news/robots">
+            <h3>High school robotics team heads to state finals</h3>
+            <p>The team placed second at regionals with a robot that sorts recycling.</p>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <h2>Weather</h2>
+        <p>Cloudy this morning, clearing by afternoon. High of 61°F.</p>
+      </section>
+
+      <section>
+        <h2>Most read</h2>
+        <ol>
+          <li><a href="/news/library">Library adds evening hours</a></li>
+          <li><a href="/news/bakery">Bakery on 3rd Street wins state award</a></li>
+          <li><a href="/news/parking">New parking rules downtown</a></li>
+        </ol>
+      </section>
+    </main>
+
+    <aside>
+      <h2>Newsletter</h2>
+      <p>Get local news in your inbox every morning.</p>
+    </aside>
+
+    <footer>
+      <p>© 2026 Riverside Courier. <a href="/privacy">Privacy</a> · <a href="/contact">Contact</a></p>
+    </footer>
+  </body>
+</html>

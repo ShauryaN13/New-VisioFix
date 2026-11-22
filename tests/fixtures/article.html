@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Riverside library adds evening hours and a quiet reading room | Riverside Courier</title>
+    <meta property="og:site_name" content="Riverside Courier" />
+    <link rel="stylesheet" href="fixtures.css" />
+    <link rel="stylesheet" href="article.css" />
+  </head>
+  <body>
+    <aside class="expect" aria-label="Expected results">
+      <h2>Expected in Focus Mode (open it from the popup or with Alt+Shift+F)</h2>
+      <ul>
+        <li>Treated as an article: no "doesn't look like an article" notice.</li>
+        <li>Title "Riverside library adds evening hours and a quiet reading room", shown once (not repeated as a heading).</li>
+        <li>Top line: "Riverside Courier · By Dana Whitfield · 1 min read".</li>
+        <li>
+          Not shown: site menu, breadcrumbs, Share buttons, cookie banner, the hidden newsletter box, "Related
+          stories", the footer, and this box.
+        </li>
+        <li>Heading levels kept as on the page (h2, h3, h4), no capital letters added.</li>
+        <li>
+          The photo with a caption is shown. Left out: the photo with no description (nothing made up) and the
+          decorative divider at the end (<code>alt=""</code>).
+        </li>
+        <li>"Close the library" link (javascript:) and the footnote link become plain text; real links stay links.</li>
+        <li>"Download the schedule (PDF)" keeps the PDF icon's description as text in the link.</li>
+        <li>
+          The opening-hours table becomes a list under "Hours from June 15": "Monday: 9 a.m. – 9 p.m." and so on (no
+          separate "Day · Hours" row).
+        </li>
+        <li>The footnote marker stays raised (superscript) after "dinner."</li>
+        <li>The address keeps its line breaks. The code sample keeps its spacing.</li>
+        <li>The loose sentence outside any paragraph is shown (legacy v1 skipped it).</li>
+        <li>"June 1" is struck out, followed by "June 15".</li>
+      </ul>
+    </aside>
+
+    <header class="site-header">
+      <a href="/"><img src="assets/logo.svg" alt="Riverside Courier home" width="140" height="32" /></a>
+      <nav class="site-nav" aria-label="Sections">
+        <a href="/">Home</a><a href="/news">News</a><a href="/sports">Sports</a><a href="/weather">Weather</a>
+      </nav>
+    </header>
+    <nav class="crumbs" aria-label="Breadcrumbs"><a href="/">Home</a><a href="/news">News</a><a href="/news/local">Local</a></nav>
+
+    <main>
+      <article>
+        <h1>Riverside library adds evening hours and a quiet reading room</h1>
+        <p class="byline">By Dana Whitfield</p>
+        <div class="share">
+          <button type="button">Share</button>
+          <a href="https://social.example/share?u=riverside" aria-label="Share on Social"><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="7" /></svg></a>
+        </div>
+
+        <figure>
+          <img src="assets/photo.svg" alt="Tall wooden bookshelves and a green reading sofa." width="600" height="300" />
+          <figcaption>The new quiet reading room on the second floor.</figcaption>
+        </figure>
+
+        <p>
+          Starting next month, the <a href="https://library.example.com/?utm_source=courier">Riverside Public Library</a>
+          will stay open until 9 p.m. on weekdays. The change follows a year of requests from students, shift workers
+          and parents who could only visit after dinner.<sup><a href="#fn1">1</a></sup>
+        </p>
+        <p>
+          Library director Marcus Hale said the longer hours are paid for by a <strong>state grant</strong>.
+          <q>People told us the building closed right when they finally had time to use it,</q> he said. The grant
+          also covers <em>two</em> new staff members for the evening shift.
+        </p>
+        <p>The opening date was <del>June 1</del> <ins>June 15</ins>.</p>
+
+        <div class="newsletter is-hidden">
+          <p>Sign up for our newsletter to get local news in your inbox every morning. This box is hidden.</p>
+        </div>
+
+        <h2>A room built for reading</h2>
+        <p>
+          The second floor now has a quiet room with adjustable lighting, large-print books and two desktop
+          magnifiers. Staff can also set up a computer with a screen reader on request.
+        </p>
+        <img src="assets/photo.svg" width="600" height="300" />
+        <div>The room seats twelve people and is open to anyone with a library card.</div>
+
+        <h3>What’s available</h3>
+        <ul>
+          <li>Large-print and audio books</li>
+          <li>
+            Two video magnifiers
+            <ul>
+              <li>One with a 24-inch screen</li>
+              <li>One portable model you can borrow</li>
+            </ul>
+          </li>
+          <li>Computers with screen readers, set up on request</li>
+        </ul>
+
+        <blockquote>
+          <p>It’s the first place in town where I can read for an hour without a headache.</p>
+          <p>— Ana Ruiz, longtime visitor</p>
+        </blockquote>
+
+        <h4>Opening hours</h4>
+        <table>
+          <caption>Hours from June 15</caption>
+          <thead>
+            <tr><th>Day</th><th>Hours</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Monday</th><td>9 a.m. – 9 p.m.</td></tr>
+            <tr><th>Saturday</th><td>10 a.m. – 5 p.m.</td></tr>
+            <tr><th>Sunday</th><td>Closed</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="how-to-visit">How to visit</h2>
+        <address>Riverside Public Library<br />210 Water Street<br />Riverside</address>
+        <p>
+          <a href="assets/photo.svg">Download the schedule <img src="assets/pixel.svg" alt="(PDF)" width="12" height="12" /></a>
+          or <a href="javascript:void(0)">Close the library</a> (this link does nothing). You can also check the
+          catalog from home with the library’s free app, or by typing a command like this one:
+        </p>
+        <pre><code>library search --title "large print" --branch riverside
+  --available-only</code></pre>
+        <p id="fn1"><small>1. Based on a survey of 400 library card holders in March.</small></p>
+        <img src="assets/divider.svg" alt="" width="600" height="8" />
+        <div aria-hidden="true">Decorative repeat of the headline that screen readers never hear.</div>
+      </article>
+
+      <aside class="related">
+        <h2>Related stories</h2>
+        <ul>
+          <li><a href="/news/bridge">Water Street bridge reopens</a></li>
+          <li><a href="/news/robots">Robotics team heads to state finals</a></li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer>
+      <p>© 2026 Riverside Courier. <a href="/privacy">Privacy</a> · <a href="/contact">Contact</a></p>
+    </footer>
+
+    <div class="cookie" role="dialog" aria-label="Cookies">
+      This site uses cookies. <button type="button">OK</button>
+    </div>
+  </body>
+</html>

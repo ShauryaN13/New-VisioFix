@@ -1,7 +1,8 @@
 import type { Browser } from 'wxt/browser';
+import { FocusMode } from '@/focus/overlay';
 import { RepairEngine } from '@/repair/engine';
 import { SITE_MATCHES } from '@/shared/matches';
-import { isVisioFixMessage, REPORT_PORT, type StatusReply } from '@/shared/messages';
+import { type FocusReply, isVisioFixMessage, REPORT_PORT, type StatusReply } from '@/shared/messages';
 import { offSitesItem, repairsActiveFor, repairsOnItem } from '@/shared/settings';
 
 /**
@@ -12,7 +13,8 @@ import { offSitesItem, repairsActiveFor, repairsOnItem } from '@/shared/settings
  * from the popup or everywhere from the settings page. If the extension is
  * reloaded, updated or removed, everything is undone too.
  *
- * Focus Mode joins this script in Phase 4.
+ * Also opens Focus Mode when asked (popup or keyboard shortcut). Focus Mode
+ * works whether or not repairs are on.
  */
 export default defineContentScript({
   matches: SITE_MATCHES,
@@ -42,6 +44,7 @@ export default defineContentScript({
     };
 
     const engine = new RepairEngine(document, { onChange: pushStatus });
+    const focusMode = new FocusMode(ctx);
 
     const applySettings = async () => {
       const [repairsOn, offSites] = await Promise.all([repairsOnItem.getValue(), offSitesItem.getValue()]);
@@ -55,13 +58,30 @@ export default defineContentScript({
     const unwatchSites = offSitesItem.watch(() => void applySettings());
     await applySettings();
 
-    const onMessage = (message: unknown, _sender: unknown, sendResponse: (reply: StatusReply) => void) => {
-      if (!isVisioFixMessage(message)) return;
+    const onMessage = (
+      message: unknown,
+      _sender: unknown,
+      sendResponse: (reply: StatusReply | FocusReply) => void,
+    ): true | undefined => {
+      if (!isVisioFixMessage(message)) return undefined;
       if (message.type === 'visiofix:status') {
         // Report what's done so far. No flush(): on a heavy page that could block
         // it for a moment; the open popup gets updates as the work finishes.
         sendResponse(status());
+        return undefined;
       }
+      const done = () => sendResponse({ ok: true, open: focusMode.isOpen });
+      const failed = (error: unknown) => {
+        console.error('VisioFix Focus Mode:', error);
+        sendResponse({ ok: false, open: focusMode.isOpen });
+      };
+      if (message.action === 'toggle') void focusMode.toggle().then(done, failed);
+      else if (message.action === 'open') void focusMode.open().then(done, failed);
+      else {
+        focusMode.close();
+        done();
+      }
+      return true; // the reply comes later
     };
     browser.runtime.onMessage.addListener(onMessage);
 

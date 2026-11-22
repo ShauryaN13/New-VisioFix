@@ -1,0 +1,16 @@
+/* Styles for article.html, in a file rather than inline, so the strict-CSP
+   version of the page (?csp=strict) looks exactly the same. */
+.is-hidden {
+  display: none;
+}
+.site-nav a,
+.crumbs a {
+  margin-right: 1rem;
+}
+.cookie {
+  position: fixed;
+  inset: auto 1rem 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #ccc;
+}

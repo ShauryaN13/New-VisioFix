@@ -401,7 +401,8 @@ function aboutSection(): HTMLElement {
       h(
         'p',
         { class: 'row-help' },
-        'Font: Atkinson Hyperlegible Next by the Braille Institute (SIL Open Font License). Icons: Lucide (ISC License).',
+        'Font: Atkinson Hyperlegible Next by the Braille Institute (SIL Open Font License). Icons: Lucide (ISC License). ' +
+          'Focus Mode uses Mozilla Readability (Apache License 2.0); repairs use dom-accessibility-api (MIT License).',
       ),
     ),
   );

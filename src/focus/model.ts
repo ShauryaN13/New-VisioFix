@@ -1,14 +1,22 @@
 /**
  * Focus Mode's content model: the page's main content reduced to a small set of
- * semantic blocks. Phase 4 builds this from Readability's output (or the
- * fallback extractor); the view renders it as real HTML elements so screen
- * readers navigate it natively.
+ * semantic blocks. extract.ts builds it from Readability's output (or the
+ * fallback extractor) through the allow-list in build.ts; the view renders it
+ * as real HTML elements so screen readers navigate it natively.
+ *
+ * Text is plain strings with whitespace already collapsed. The only line
+ * breaks ("
+") come from <br> in the page (addresses, poems).
  */
 
 export type Inline =
   | string
   | { kind: 'link'; href: string; children: Inline[] }
-  | { kind: 'strong' | 'em' | 'code'; children: Inline[] };
+  /**
+   * del: struck-out text ("June 1" replaced by "June 15"); dropping it would change the meaning.
+   * sup/sub: footnote markers and formulas, which otherwise run into the word before them.
+   */
+  | { kind: 'strong' | 'em' | 'code' | 'del' | 'sup' | 'sub'; children: Inline[] };
 
 export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -19,7 +27,7 @@ export type Block =
   | { kind: 'list'; ordered: boolean; items: Block[][] }
   | { kind: 'quote'; blocks: Block[] }
   | { kind: 'code'; text: string }
-  /** alt "" = decorative. Images with no alt at all are dropped before this point. */
+  /** alt "" only when the caption describes the image. Images with no description, and decorative ones, are dropped before this point. */
   | { kind: 'figure'; src: string; alt: string; caption: Inline[] | null };
 
 export interface FocusDoc {
@@ -31,6 +39,8 @@ export interface FocusDoc {
   dir: 'ltr' | 'rtl' | null;
   /** True when Readability found no article and the fallback extractor was used. */
   isFallback: boolean;
+  /** True when the page was so long that Focus Mode stopped partway. */
+  truncated: boolean;
   blocks: Block[];
 }
 
