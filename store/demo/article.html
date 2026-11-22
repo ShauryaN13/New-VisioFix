@@ -1,0 +1,146 @@
+<!doctype html>
+<!--
+  Demo page for the Chrome Web Store screenshots (npm run store-images serves it as
+  http://riversidecourier.example/...). A made-up local news site with problems that are
+  common on real sites, so the screenshots show VisioFix's real output:
+
+  Repaired (9): three icon-only social links (named by their address), two fields whose
+  <label> isn't connected to them, a photo with a caption but no alt, a 1×1 tracking image,
+  two hidden duplicate links in story cards.
+  Reported, not changed (4): two icon-only buttons, an image with nothing to describe it,
+  a skipped heading level (h2 → h4).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Riverside library adds evening hours and a quiet reading room | Riverside Courier</title>
+    <meta property="og:site_name" content="Riverside Courier" />
+    <meta property="og:type" content="article" />
+    <link rel="stylesheet" href="demo.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <button type="button" class="icon-button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h16M2 10h16M2 15h16" stroke="currentColor" stroke-width="2" /></svg></button>
+      <a href="/" class="logo"><img src="logo.svg" alt="Riverside Courier" width="220" height="36" /></a>
+      <form class="search" action="/search">
+        <label>Search</label>
+        <input type="search" name="q" />
+      </form>
+      <nav class="social">
+        <a href="https://social.example/riversidecourier"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor" /></svg></a>
+        <a href="https://video.example/@riversidecourier"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="4" width="16" height="12" rx="3" fill="currentColor" /></svg></a>
+        <a href="mailto:tips@riversidecourier.example"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="4" width="16" height="12" fill="none" stroke="currentColor" stroke-width="2" /></svg></a>
+      </nav>
+    </header>
+    <nav class="sections" aria-label="Sections">
+      <a href="/">Home</a> <a href="/news">News</a> <a href="/sports">Sports</a> <a href="/weather">Weather</a>
+      <a href="/opinion">Opinion</a>
+    </nav>
+
+    <div class="layout">
+      <main>
+        <article>
+          <h1>Riverside library adds evening hours and a quiet reading room</h1>
+          <p class="byline">By Dana Whitfield · November 18, 2026</p>
+
+          <p>
+            Starting next month, the Riverside Public Library will stay open until 9 p.m. on weekdays. The change
+            follows a year of requests from students, shift workers and parents who could only visit after dinner.
+          </p>
+          <p>
+            Library director Marcus Hale said the longer hours are paid for by a <strong>state grant</strong>.
+            “People told us the building closed right when they finally had time to use it,” he said. The grant
+            also covers <em>two</em> new staff members for the evening shift.
+          </p>
+          <p>
+            The first evening opening is planned for December 1. Until then, the library keeps its usual hours,
+            and the second floor stays closed while the new room is finished.
+          </p>
+
+          <figure>
+            <img src="reading-room.svg" width="800" height="400" />
+            <figcaption>The new quiet reading room on the second floor.</figcaption>
+          </figure>
+
+          <h2>A room built for reading</h2>
+          <p>
+            The second floor now has a quiet room with adjustable lighting, large-print books and two video
+            magnifiers. Staff can also set up a computer with a screen reader on request.
+          </p>
+          <p>
+            The room seats twelve people and is open to anyone with a library card. Visitors can reserve a table
+            for up to two hours, or simply drop in.
+          </p>
+
+          <h3>What’s available</h3>
+          <ul>
+            <li>Large-print and audio books</li>
+            <li>
+              Two video magnifiers
+              <ul>
+                <li>One with a 24-inch screen</li>
+                <li>One portable model you can borrow</li>
+              </ul>
+            </li>
+            <li>Computers with screen readers, set up on request</li>
+            <li>Free headphones at the front desk</li>
+          </ul>
+
+          <blockquote>
+            <p>“It’s the first place in town where I can read for an hour without a headache.”</p>
+            <p>Ana Ruiz, longtime visitor</p>
+          </blockquote>
+
+          <h3>Opening hours</h3>
+          <table>
+            <caption>Hours from December 1</caption>
+            <thead>
+              <tr><th>Day</th><th>Hours</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>Monday to Thursday</th><td>9 a.m. – 9 p.m.</td></tr>
+              <tr><th>Friday</th><td>9 a.m. – 6 p.m.</td></tr>
+              <tr><th>Saturday</th><td>10 a.m. – 5 p.m.</td></tr>
+              <tr><th>Sunday</th><td>Closed</td></tr>
+            </tbody>
+          </table>
+
+          <h2>How to visit</h2>
+          <p>
+            The library is at 210 Water Street, a short walk from the Riverside bus station. Parking is free after
+            5 p.m. The front entrance has a ramp and automatic doors, and the elevator reaches every floor.
+          </p>
+          <p>
+            Questions about the new hours can go to the front desk at (555) 010-0142 or
+            <a href="mailto:help@library.example">help@library.example</a>.
+          </p>
+        </article>
+      </main>
+
+      <aside class="sidebar">
+        <h4>Most read</h4>
+        <div class="card">
+          <a href="/news/bridge" aria-hidden="true"><img src="bridge.svg" alt="" width="280" height="140" /></a>
+          <a href="/news/bridge">Water Street bridge reopens after repairs</a>
+        </div>
+        <div class="card">
+          <a href="/news/robots" aria-hidden="true"><img src="robots.svg" alt="" width="280" height="140" /></a>
+          <a href="/news/robots">High school robotics team heads to state finals</a>
+        </div>
+        <img src="promo.svg" width="280" height="120" />
+        <form class="newsletter" action="/subscribe">
+          <p>Get local news every morning.</p>
+          <label>Email address</label>
+          <input type="email" name="email" />
+          <button type="submit" class="icon-button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" /></svg></button>
+        </form>
+      </aside>
+    </div>
+
+    <footer>
+      <p>© 2026 Riverside Courier (a made-up newspaper for VisioFix’s screenshots).</p>
+    </footer>
+    <img src="pixel.svg" width="1" height="1" class="pixel" />
+  </body>
+</html>

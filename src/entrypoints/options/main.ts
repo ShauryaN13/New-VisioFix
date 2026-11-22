@@ -26,6 +26,9 @@ import { type OptionsModel, renderOptions } from '@/ui/options/view';
 const SAMPLE = 'This is how VisioFix will read to you in Focus Mode.';
 
 const root = document.getElementById('app') as HTMLElement;
+/** A status region that stays on the page across re-renders (see index.html). */
+const announcer = document.getElementById('announcer') as HTMLElement;
+const version = browser.runtime.getManifest().version;
 
 let repairsOn = true;
 let offSites: string[] = [];
@@ -53,6 +56,7 @@ function render(): void {
       speed: speech.speed,
       sampleNote,
       shortcuts,
+      version,
     },
     {
       onRepairsOn: (on) => {
@@ -104,11 +108,15 @@ function playSample(): void {
     sampleNote = choice.language
       ? `There’s no voice for ${choice.language} on this computer. Choose one above, or add one in your system’s speech settings.`
       : 'This computer has no voices for reading aloud.';
+    // Cleared first, so pressing the button again announces the note again.
+    announcer.textContent = '';
+    setTimeout(() => (announcer.textContent = sampleNote), 50);
     render();
     return;
   }
   if (sampleNote) {
     sampleNote = null;
+    announcer.textContent = '';
     render();
   }
   speechSynthesis.cancel();
@@ -119,10 +127,14 @@ function playSample(): void {
   speechSynthesis.speak(sample);
 }
 
-async function init(): Promise<void> {
-  shortcuts = (await getShortcuts())
+async function loadShortcuts(): Promise<OptionsModel['shortcuts']> {
+  return (await getShortcuts())
     .filter((c) => c.description)
     .map((c) => ({ action: c.description, shortcut: c.shortcut }));
+}
+
+async function init(): Promise<void> {
+  shortcuts = await loadShortcuts();
   [repairsOn, offSites, focus, speech] = await Promise.all([
     repairsOnItem.getValue(),
     offSitesItem.getValue(),
@@ -148,6 +160,17 @@ async function init(): Promise<void> {
   offSitesItem.watch((value) => {
     offSites = value;
     render();
+  });
+
+  // Chrome has no event for shortcut changes: re-read them when the reader
+  // comes back from chrome://extensions/shortcuts (or any other tab).
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    void loadShortcuts().then((next) => {
+      if (JSON.stringify(next) === JSON.stringify(shortcuts)) return;
+      shortcuts = next;
+      render();
+    });
   });
 }
 

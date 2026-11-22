@@ -10,6 +10,9 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Outside #app, so it survives re-renders: screen readers announce changes
+         only in a status region that was already on the page. -->
+    <div id="announcer" role="status" class="visually-hidden"></div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

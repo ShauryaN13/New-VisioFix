@@ -12,9 +12,17 @@ export interface ShortcutInfo {
   shortcut: string | null;
 }
 
-/** Chrome names some keys ("Alt+Shift+Period"); people know them by their symbol. */
+/** Chrome names some keys ("Alt+Shift+Period"); people know them by their symbol. Edge already writes ",". */
 export function formatShortcut(shortcut: string): string {
   return shortcut.replace(/\bPeriod\b/g, '.').replace(/\bComma\b/g, ',');
+}
+
+/** The order people meet them in (Chrome lists commands alphabetically by name). */
+const ORDER = ['toggle-focus-mode', 'play-pause', 'next-sentence', 'previous-sentence'];
+
+function rank(name: string): number {
+  const index = ORDER.indexOf(name);
+  return index === -1 ? ORDER.length : index;
 }
 
 export async function getShortcuts(): Promise<ShortcutInfo[]> {
@@ -28,7 +36,8 @@ export async function getShortcuts(): Promise<ShortcutInfo[]> {
         name: c.name as string,
         description: c.description ?? '',
         shortcut: c.shortcut ? formatShortcut(c.shortcut) : null,
-      }));
+      }))
+      .sort((a, b) => rank(a.name) - rank(b.name));
   } catch {
     return [];
   }

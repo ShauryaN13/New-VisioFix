@@ -77,6 +77,7 @@ The legacy Android code calls the app "CleanView" in places. The name is **Visio
 | `npm run icons` | Renders the icon from `src/assets/brand.ts` to `public/icon/{16,32,48,128}.png` |
 | `npm run fonts` | Copies the used woff2 files to `public/fonts/` and the OFL to `public/licenses/` |
 | `npm run fixtures` | Serves `tests/fixtures/` at http://localhost:5181 (tiny Node script, no dependency). `?csp=strict` adds a locked-down Content Security Policy |
+| `npm run store-images` | After `npm run build`: store screenshots (`store/screenshots/`, 1280×800) and promo tile (`store/promo/`, 440×280) from the real build in headless Chrome, on the demo page `store/demo/` (no dependency) |
 
 **Dependencies** (✓ = installed)
 | Package | Ships? | Reason |
@@ -108,6 +109,10 @@ No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prett
   `commands.onCommand` passes the active tab, so the shortcut needs no `tabs` permission.
   Tabs opened before install get a "Reload this page" button in the popup instead of `scripting`.
 - Check the production manifest after builds: WXT adds `tabs`/`scripting` only in dev mode.
+- `minimum_chrome_version: 123` (not a permission): the popup and settings colors use CSS
+  `light-dark()`; older browsers can't install VisioFix instead of getting unreadable colors.
+- Full Privacy-tab answers (single purpose, justifications, remote code, data usage) are in
+  `store/permissions.md`; the policy is `PRIVACY.md`.
 
 ## Approved design
 
@@ -282,6 +287,12 @@ fresh elements, so no scripts, styles, classes or handlers can come along.
 
 ### 4. Popup and settings
 - Popup and settings follow system light/dark. Font: Atkinson Hyperlegible Next.
+- Settings (Phase 6): shortcuts listed in a fixed order (Focus Mode, play/pause, next, previous;
+  `getShortcuts()` sorts, Chrome returns them alphabetically) and re-read when the tab becomes
+  visible again (Chrome has no event for shortcut changes). "Play a sample" messages also go to a
+  `role=status` region outside `#app` (`#announcer`), because the view re-creates everything on
+  render and a region inserted with its text often isn't announced. Credits link to the bundled
+  license files (new tab, said in the link name); the version comes from the manifest.
 
 ### Design system (Phase 2, revision 2, per user feedback)
 **Brand and color**
@@ -387,15 +398,18 @@ src/
   ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
   assets/       brand.ts (the icon as data)
 preview/        design preview (dev only): index.html · frame.html · sample-data.ts
-scripts/        build-icons.mjs · copy-fonts.mjs · serve-fixtures.mjs
+scripts/        build-icons.mjs · copy-fonts.mjs · serve-fixtures.mjs · store-images.mjs
 public/fonts/   Atkinson Hyperlegible Next woff2 files
 public/licenses/ OFL (font), ISC (Lucide), Apache 2.0 (Readability), MIT (dom-accessibility-api)
 public/icon/    16, 32, 48, 128 PNGs (from src/assets/brand.ts)
-tests/unit/     *.test.ts; repair/ engine and rules, focus/ extraction and view, speech/ read-aloud
+tests/unit/     *.test.ts; repair/ engine and rules, focus/ extraction and view, speech/ read-aloud,
+                commands (order, key names), options-view (credits, version)
                 (fake-speech.ts imitates Chrome's speechSynthesis)
 tests/fixtures/ index, legacy-bugs, controls, images (lazy, hidden, script-set src), aria, headings,
                 dynamic, stress, article (+ article.css, also with ?csp=strict), not-article, french
-store/          listing.md · permissions.md · screenshots/
+store/          listing.md (Store listing tab) · permissions.md (Privacy tab) · test-checklist.md
+                screenshots/ · promo/ · demo/ (made-up news page for the screenshots)
+PRIVACY.md      privacy policy (needs a public URL for the dashboard)
 legacy/         reference only, excluded from the build
 ```
 
@@ -474,6 +488,22 @@ legacy/         reference only, excluded from the build
   chrome://extensions/shortcuts.
 - Headless testing of speech: patch `speechSynthesis.speak` in the content script's isolated
   world (CDP `Runtime.evaluate` with its context id) to set `volume = 0` and log the voice.
+- Right after `Extensions.loadUnpacked`, the service worker target can be attached before
+  `chrome.*` exists ("chrome is not defined"): wait until `typeof chrome` is defined.
+- The popup target refuses `Emulation.setDeviceMetricsOverride`, and in headless Chrome the popup
+  window doesn't grow when content opens ("See what changed"): capture with
+  `captureBeyondViewport: true` and clip to `.popup`.
+- Edge 158 headless doesn't answer on `--remote-debugging-pipe`, but still honors
+  `--load-extension` (Chrome dropped it): use `--remote-debugging-port` + a WebSocket and find the
+  worker by `chrome.runtime.getManifest().name`. In headless Edge `action.openPopup()` opens the
+  popup but its promise never resolves.
+- Edge's `commands.getAll()` writes "Alt+Shift+," but "Alt+Shift+Period"; `formatShortcut` handles
+  both. Edge opens `chrome://extensions/shortcuts` as `edge://extensions/shortcuts`.
+- Killing a test script with `timeout` leaves its headless browser running (and holding the
+  debugging port): stop leftover processes by their `--user-data-dir`.
+- Chrome Web Store (checked 2026-11-21): a privacy policy URL is required even when data never
+  leaves the device, and reading page content locally counts as handling "Website content".
+  Screenshots 1280×800 (1–5); the 440×280 small promo tile is optional; icon 128×128.
 
 ## Progress
 - **Phase 1: done (2026-11-16).** Legacy v1 extracted to `legacy/android-v1/` (zip deleted),
@@ -539,3 +569,15 @@ legacy/         reference only, excluded from the build
   Found and fixed: Alt+Shift+P is taken by Chrome 158 (now K); Chrome needs page activation
   before speaking (now "Press Play" + focus on Play); Chrome's second voice list; "[note 1]"
   markers read aloud. Not tried with real audio or a real screen reader.
+- **Phase 6: done (2026-11-21).** Version 1.0.0, `minimum_chrome_version` 123. Settings: version,
+  credits linked to the bundled licenses, shortcut list in a sensible order and refreshed after
+  changing keys, sample note announced from a persistent status region. Store package: privacy
+  policy (`PRIVACY.md`), listing text, Privacy-tab answers and permission justifications, final
+  manual checklist (`store/`), 5 screenshots + small promo tile made from the real build by
+  `npm run store-images` on a demo page (`store/demo/`). 300 unit tests. Verified headless in
+  Chrome 158 and Edge 158 with the production build: all 4 shortcuts assigned, demo page 9 fixes +
+  4 reported as designed, pause undoes all 12 changes and resume re-applies, popup, Focus Mode,
+  font, local voice chosen (Edge offers 300+ online voices), settings links, "Change shortcuts"
+  opens each browser's shortcuts page. The zip is the 27 built files (167 KB); no eval or remote
+  code. Still not done by a person: real audio, screen readers, Gmail, Mac/ChromeOS keys
+  (`store/test-checklist.md`). The user submits.

@@ -163,6 +163,7 @@ export const optionsModel: OptionsModel = {
   allowOnlineVoices: false,
   speed: 1,
   sampleNote: null,
+  version: '1.0.0',
   shortcuts: [
     { action: 'Open or close Focus Mode', shortcut: 'Alt+Shift+F' },
     { action: 'Read aloud: play or pause', shortcut: 'Alt+Shift+K' },

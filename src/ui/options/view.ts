@@ -5,7 +5,8 @@ import { logoMark } from '@/ui/logo';
 
 /**
  * The settings page, as a function of its state (no browser APIs).
- * Phase 6 connects it to chrome.storage and the speech engine.
+ * src/entrypoints/options/main.ts connects it to chrome.storage and the
+ * speech engine; the design preview passes sample data.
  * Layout follows Chrome's own settings: section titles outside the cards,
  * one card per section, short helper text under every control.
  */
@@ -29,10 +30,36 @@ export interface OptionsModel {
   voiceId: string | null;
   allowOnlineVoices: boolean;
   speed: number;
-  /** Shown under "Play a sample" when it can't play (no voice to use). */
+  /**
+   * Shown under "Play a sample" when it can't play (no voice to use). The
+   * page also puts it in a status region outside the view, which screen
+   * readers announce (this paragraph is re-created on every render).
+   */
   sampleNote: string | null;
   shortcuts: { action: string; shortcut: string | null }[];
+  /** The extension's version, e.g. "1.0.0". */
+  version: string;
 }
+
+/** Credits, each linking to its license file bundled with the extension (public/licenses). */
+const CREDITS: { what: string; license: string; href: string }[] = [
+  {
+    what: 'Font: Atkinson Hyperlegible Next, by the Braille Institute',
+    license: 'SIL Open Font License',
+    href: '/licenses/atkinson-hyperlegible-next-OFL.txt',
+  },
+  { what: 'Icons: Lucide', license: 'ISC License', href: '/licenses/lucide.txt' },
+  {
+    what: 'Focus Mode: Mozilla Readability',
+    license: 'Apache License 2.0',
+    href: '/licenses/readability.txt',
+  },
+  {
+    what: 'Repairs: dom-accessibility-api',
+    license: 'MIT License',
+    href: '/licenses/dom-accessibility-api.txt',
+  },
+];
 
 export interface OptionsHandlers {
   onRepairsOn(on: boolean): void;
@@ -69,7 +96,7 @@ export function renderOptions(root: HTMLElement, model: OptionsModel, handlers: 
         focusSection(model, handlers),
         readAloudSection(model, handlers),
         shortcutsSection(model, handlers),
-        aboutSection(),
+        aboutSection(model),
       ),
     ),
   );
@@ -350,7 +377,7 @@ function readAloudSection(model: OptionsModel, handlers: OptionsHandlers): HTMLE
           icon('play'),
           'Play a sample',
         ),
-      model.sampleNote ? h('p', { class: 'row-help', role: 'status' }, model.sampleNote) : null,
+      model.sampleNote ? h('p', { class: 'row-help sample-note' }, model.sampleNote) : null,
     ),
   );
 }
@@ -395,7 +422,8 @@ function shortcutsSection(model: OptionsModel, handlers: OptionsHandlers): HTMLE
   );
 }
 
-function aboutSection(): HTMLElement {
+function aboutSection(model: OptionsModel): HTMLElement {
+  const creditsId = uid('credits');
   return section(
     'Privacy',
     h(
@@ -406,12 +434,31 @@ function aboutSection(): HTMLElement {
         { class: 'about-text' },
         'VisioFix works entirely on your computer. It doesn’t collect, store or send anything about you or the pages you visit. Your settings are saved only in this browser.',
       ),
+    ),
+    h(
+      'div',
+      { class: 'row' },
+      h('h3', { id: creditsId, class: 'row-label' }, 'Credits'),
       h(
-        'p',
-        { class: 'row-help' },
-        'Font: Atkinson Hyperlegible Next by the Braille Institute (SIL Open Font License). Icons: Lucide (ISC License). ' +
-          'Focus Mode uses Mozilla Readability (Apache License 2.0); repairs use dom-accessibility-api (MIT License).',
+        'ul',
+        { class: 'credits', role: 'list', 'aria-labelledby': creditsId },
+        CREDITS.map((credit) =>
+          h(
+            'li',
+            null,
+            `${credit.what} (`,
+            // Opens the license text bundled with VisioFix, in a new tab.
+            h(
+              'a',
+              { class: 'text-link', href: credit.href, target: '_blank', rel: 'noopener' },
+              credit.license,
+              h('span', { class: 'visually-hidden' }, ', opens in a new tab'),
+            ),
+            ')',
+          ),
+        ),
       ),
+      h('p', { class: 'row-help' }, `VisioFix version ${model.version}`),
     ),
   );
 }

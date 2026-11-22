@@ -10,6 +10,9 @@ export default defineConfig({
     name: 'VisioFix',
     description:
       'Repairs common accessibility problems on the pages you visit and adds a high-contrast Focus Mode with read-aloud.',
+    // The popup and settings colors use CSS light-dark() (Chrome and Edge 123+). Older
+    // browsers can't install VisioFix rather than getting unreadable colors.
+    minimum_chrome_version: '123',
     // storage: saves your settings and per-site on/off choices on your computer.
     permissions: ['storage'],
     // Needed to repair pages automatically and open Focus Mode on any site you visit.

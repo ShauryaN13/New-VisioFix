@@ -1,6 +1,6 @@
 {
   "name": "visiofix",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Repairs common accessibility problems on the pages you visit and adds a high-contrast Focus Mode with read-aloud.",
   "type": "module",
@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "design": "vite --config preview/vite.config.ts",
     "fixtures": "node scripts/serve-fixtures.mjs",
+    "store-images": "node scripts/store-images.mjs",
     "icons": "node scripts/build-icons.mjs",
     "fonts": "node scripts/copy-fonts.mjs",
     "postinstall": "wxt prepare"
