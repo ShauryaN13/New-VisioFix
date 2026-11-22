@@ -13,7 +13,6 @@ import focusCss from '@/focus/focus.css?inline';
 import { DEFAULT_TEXT_SIZE, type FocusSettings } from '@/focus/model';
 import { renderFocusView } from '@/focus/view';
 import { h } from '@/ui/dom';
-import { icon } from '@/ui/icons';
 import { type OptionsModel, renderOptions } from '@/ui/options/view';
 import { type PopupModel, type PopupPage, renderPopup } from '@/ui/popup/view';
 import { article, fallbackDoc, optionsModel, popupStates } from './sample-data';
@@ -137,6 +136,7 @@ function renderFocusPreview(): void {
     },
     onPrevious: () => undefined,
     onNext: () => undefined,
+    onReadFrom: () => undefined,
     onSettingsChange: () => undefined,
   });
   if (variant !== 'fallback') showReadingDemo(view.article);
@@ -151,11 +151,7 @@ function renderFocusPreview(): void {
 function showReadingDemo(articleEl: HTMLElement): void {
   const paragraphs = articleEl.querySelectorAll(':scope > p:not(.vf-meta)');
   wrapSentence(paragraphs[1], '“People told us the building closed right when they finally had time to use it,” he said.');
-  const hovered = paragraphs[2];
-  if (hovered) {
-    hovered.classList.add('is-hover');
-    hovered.prepend(h('span', { class: 'vf-play-here', 'aria-hidden': 'true' }, icon('play', { filled: true })));
-  }
+  paragraphs[2]?.classList.add('is-hover');
 }
 
 function wrapSentence(container: Element | undefined, sentence: string): void {

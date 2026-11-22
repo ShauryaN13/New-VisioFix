@@ -10,6 +10,9 @@ import type { PageReport } from './report';
  *   - Focus Mode: the popup ('open') and the keyboard shortcut in the
  *     background ('toggle') send a FocusMessage; the reply says whether
  *     Focus Mode is open afterwards.
+ *   - Read-aloud: the popup's Read aloud ('start') and the shortcuts
+ *     ('toggle', 'next', 'previous') send a SpeechMessage. 'start' and
+ *     'toggle' open Focus Mode first if needed. Same reply as FocusMessage.
  *   - Live: the popup opens a port named REPORT_PORT with tabs.connect; the
  *     content script posts a StatusReply right away and again whenever the
  *     page's fixes change, until the popup closes.
@@ -26,7 +29,12 @@ export interface FocusMessage {
   action: 'open' | 'toggle' | 'close';
 }
 
-export type VisioFixMessage = StatusMessage | FocusMessage;
+export interface SpeechMessage {
+  type: 'visiofix:speech';
+  action: 'start' | 'toggle' | 'next' | 'previous';
+}
+
+export type VisioFixMessage = StatusMessage | FocusMessage | SpeechMessage;
 
 export interface FocusReply {
   ok: boolean;

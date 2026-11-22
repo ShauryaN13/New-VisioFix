@@ -38,6 +38,7 @@ const render = (d: FocusDoc) =>
     onPlayPause: () => undefined,
     onPrevious: () => undefined,
     onNext: () => undefined,
+    onReadFrom: () => undefined,
     onSettingsChange: () => undefined,
   });
 

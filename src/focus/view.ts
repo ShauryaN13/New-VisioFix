@@ -21,6 +21,10 @@ import {
  * Toolbar: mark + site name | previous, Play, next | "Aa" panel, Close.
  * The "Aa" button is a disclosure for text size, theme and speed. Changes
  * apply to the view immediately and are reported through onSettingsChange.
+ *
+ * Under the progress bar, a status line shows read-aloud messages ("Press
+ * Play to start reading"). It's a role="status" region, so screen readers
+ * announce it; VisioFix itself never speaks status.
  */
 
 export interface FocusHandlers {
@@ -28,6 +32,8 @@ export interface FocusHandlers {
   onPlayPause(): void;
   onPrevious(): void;
   onNext(): void;
+  /** "Read from here" was clicked next to this paragraph. */
+  onReadFrom(paragraph: HTMLElement): void;
   /** Called after the view has already applied the change. */
   onSettingsChange(settings: FocusSettings): void;
 }
@@ -40,6 +46,9 @@ export interface FocusView {
   setSettings(settings: FocusSettings): void;
   /** Moves focus to the article title: screen readers start reading there, and arrow keys scroll the article. */
   focusTitle(): void;
+  focusPlay(): void;
+  /** Shows a message under the toolbar, or clears it (null). */
+  setStatus(message: string | null): void;
   openPanel(): void;
   closePanel(returnFocus: boolean): void;
   destroy(): void;
@@ -194,6 +203,9 @@ export function renderFocusView(
 
   const progressFill = h('div', { class: 'vf-progress-fill' });
   const progress = h('div', { class: 'vf-progress', 'aria-hidden': 'true' }, progressFill);
+  // The live region is always there (empty when there's nothing to say), so
+  // screen readers notice when a message appears in it.
+  const statusRegion = h('div', { class: 'vf-status-region', role: 'status' });
 
   const minutes = readingMinutes(doc);
   const meta = [doc.siteName, doc.byline, `${minutes} min read`].filter(Boolean).join(' · ');
@@ -211,11 +223,15 @@ export function renderFocusView(
           notice(
             'This page doesn’t look like an article, so Focus Mode is showing all the main text it found. Some of it may be menus or links.',
           ),
-    doc.blocks.map(renderBlock),
+    doc.blocks.map((block) => {
+      const el = renderBlock(block);
+      if (block.kind === 'paragraph') el.prepend(readFromHere(el, handlers));
+      return el;
+    }),
     doc.truncated && notice('Focus Mode stopped here because this page is very long.'),
   );
   const scroller = h('div', { class: 'vf-scroll' }, article);
-  const root = h('div', { class: 'vf-focus' }, toolbar, progress, scroller);
+  const root = h('div', { class: 'vf-focus' }, toolbar, progress, statusRegion, scroller);
 
   /* ---- Behavior ---- */
 
@@ -300,6 +316,10 @@ export function renderFocusView(
     openPanel,
     closePanel,
     focusTitle: () => title.focus({ preventScroll: true }),
+    focusPlay: () => playButton.focus(),
+    setStatus(message) {
+      statusRegion.replaceChildren(message ? h('p', { class: 'vf-status' }, icon('info'), h('span', null, message)) : '');
+    },
     destroy() {
       settingsWrap.removeEventListener('keydown', onKeydown);
       settingsWrap.removeEventListener('focusout', onFocusOut);
@@ -308,6 +328,43 @@ export function renderFocusView(
       if (frame) cancelAnimationFrame(frame);
     },
   };
+}
+
+/**
+ * What shows while a big page is being prepared. It stays invisible for the
+ * first 300ms (a CSS animation delay), so quick opens don't flash it. The
+ * animation runs off the main thread, so it appears even while the page's
+ * text is being read.
+ */
+export function renderLoading(theme: FocusSettings['theme']): HTMLElement {
+  return h(
+    'div',
+    { class: 'vf-focus', 'data-theme': theme },
+    h(
+      'div',
+      { class: 'vf-loading' },
+      h('span', { class: 'vf-spinner', 'aria-hidden': 'true' }),
+      h('p', null, 'Getting the page ready…'),
+    ),
+  );
+}
+
+/**
+ * The mouse-only "Read from here" button in a paragraph's left margin, shown
+ * on hover. Hidden from screen readers and the Tab order: keyboard users press
+ * Play, which starts at the first paragraph on screen.
+ */
+function readFromHere(paragraph: HTMLElement, handlers: FocusHandlers): HTMLElement {
+  return h(
+    'span',
+    {
+      class: 'vf-play-here',
+      'aria-hidden': 'true',
+      title: 'Read from here',
+      onclick: () => handlers.onReadFrom(paragraph),
+    },
+    icon('play', { filled: true }),
+  );
 }
 
 function notice(text: string): HTMLElement {

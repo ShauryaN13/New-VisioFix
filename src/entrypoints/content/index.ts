@@ -13,8 +13,8 @@ import { offSitesItem, repairsActiveFor, repairsOnItem } from '@/shared/settings
  * from the popup or everywhere from the settings page. If the extension is
  * reloaded, updated or removed, everything is undone too.
  *
- * Also opens Focus Mode when asked (popup or keyboard shortcut). Focus Mode
- * works whether or not repairs are on.
+ * Also opens Focus Mode and reads aloud when asked (popup or keyboard
+ * shortcuts). Both work whether or not repairs are on.
  */
 export default defineContentScript({
   matches: SITE_MATCHES,
@@ -75,7 +75,8 @@ export default defineContentScript({
         console.error('VisioFix Focus Mode:', error);
         sendResponse({ ok: false, open: focusMode.isOpen });
       };
-      if (message.action === 'toggle') void focusMode.toggle().then(done, failed);
+      if (message.type === 'visiofix:speech') void focusMode.readAloud(message.action).then(done, failed);
+      else if (message.action === 'toggle') void focusMode.toggle().then(done, failed);
       else if (message.action === 'open') void focusMode.open().then(done, failed);
       else {
         focusMode.close();

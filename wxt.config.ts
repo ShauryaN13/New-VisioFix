@@ -22,12 +22,28 @@ export default defineConfig({
     // Focus Mode's font, loaded into pages while Focus Mode is open. use_dynamic_url:
     // the address changes every session, so sites can't probe it to detect VisioFix.
     web_accessible_resources: [{ resources: FONT_FILES, matches: SITE_MATCHES, use_dynamic_url: true }],
-    // Keyboard shortcuts (a manifest key, not a permission). Users can change them at
-    // chrome://extensions/shortcuts. Phase 5 adds read-aloud and checks for conflicts.
+    // Keyboard shortcuts (a manifest key, not a permission). Chrome allows at most 4 suggested
+    // keys; users can change them at chrome://extensions/shortcuts. On a Mac, Option+Shift+letter
+    // types characters (Option+Shift+F is "Ï"), so the Mac keys use Control instead.
+    // Play/pause is K (as in YouTube and most web video players): Chrome 158 keeps Alt+Shift+P
+    // (and R, X, Z) for itself, so a suggested Alt+Shift+P is never assigned. Not S: ChromeOS
+    // opens quick settings with Alt+Shift+S.
     commands: {
       'toggle-focus-mode': {
-        suggested_key: { default: 'Alt+Shift+F' },
+        suggested_key: { default: 'Alt+Shift+F', mac: 'MacCtrl+Shift+F' },
         description: 'Open or close Focus Mode',
+      },
+      'play-pause': {
+        suggested_key: { default: 'Alt+Shift+K', mac: 'MacCtrl+Shift+K' },
+        description: 'Read aloud: play or pause',
+      },
+      'next-sentence': {
+        suggested_key: { default: 'Alt+Shift+Period', mac: 'MacCtrl+Shift+Period' },
+        description: 'Read aloud: next sentence',
+      },
+      'previous-sentence': {
+        suggested_key: { default: 'Alt+Shift+Comma', mac: 'MacCtrl+Shift+Comma' },
+        description: 'Read aloud: previous sentence',
       },
     },
   },

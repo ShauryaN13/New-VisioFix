@@ -4,7 +4,13 @@ import '@/ui/base.css';
 import '@/ui/popup/popup.css';
 import type { Browser } from 'wxt/browser';
 import { getShortcuts } from '@/shared/commands';
-import { type FocusMessage, REPORT_PORT, type StatusMessage, type StatusReply } from '@/shared/messages';
+import {
+  type FocusMessage,
+  REPORT_PORT,
+  type SpeechMessage,
+  type StatusMessage,
+  type StatusReply,
+} from '@/shared/messages';
 import type { PageReport } from '@/shared/report';
 import { offSitesItem, repairsOnItem, withSite } from '@/shared/settings';
 import { getSiteKey } from '@/shared/site';
@@ -13,7 +19,6 @@ import { type PopupModel, renderPopup } from '@/ui/popup/view';
 /**
  * The toolbar popup. Reads the settings, asks the page's content script for
  * its report, and keeps both up to date while the popup is open.
- * Read aloud is wired up in Phase 5.
  */
 
 const root = document.getElementById('app') as HTMLElement;
@@ -74,7 +79,11 @@ function render(): void {
       window.close();
     },
     onReadAloud: () => {
-      // Phase 5.
+      if (state.tabId === null) return;
+      // Opens Focus Mode and starts reading at the top.
+      const message: SpeechMessage = { type: 'visiofix:speech', action: 'start' };
+      void browser.tabs.sendMessage(state.tabId, message).catch(() => undefined);
+      window.close();
     },
     onReload: () => {
       if (state.tabId !== null) void browser.tabs.reload(state.tabId);

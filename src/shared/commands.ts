@@ -8,8 +8,13 @@
 export interface ShortcutInfo {
   name: string;
   description: string;
-  /** e.g. "Alt+Shift+F", or null when the user removed it. */
+  /** e.g. "Alt+Shift+F" or "Alt+Shift+.", or null when it isn't set. */
   shortcut: string | null;
+}
+
+/** Chrome names some keys ("Alt+Shift+Period"); people know them by their symbol. */
+export function formatShortcut(shortcut: string): string {
+  return shortcut.replace(/\bPeriod\b/g, '.').replace(/\bComma\b/g, ',');
 }
 
 export async function getShortcuts(): Promise<ShortcutInfo[]> {
@@ -19,7 +24,11 @@ export async function getShortcuts(): Promise<ShortcutInfo[]> {
     const commands = await api.getAll();
     return commands
       .filter((c) => c.name && !c.name.startsWith('_'))
-      .map((c) => ({ name: c.name as string, description: c.description ?? '', shortcut: c.shortcut || null }));
+      .map((c) => ({
+        name: c.name as string,
+        description: c.description ?? '',
+        shortcut: c.shortcut ? formatShortcut(c.shortcut) : null,
+      }));
   } catch {
     return [];
   }

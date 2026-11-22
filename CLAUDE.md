@@ -102,7 +102,8 @@ No DOMPurify (Focus Mode builds its own DOM from an allow-list), no ESLint/Prett
 - `web_accessible_resources`: only the 8 font files (`FONT_FILES` in `src/focus/font.ts`), with
   `use_dynamic_url` (the address changes every session, so sites can't probe it to detect
   VisioFix): lets Focus Mode show its bundled font on the page.
-- `commands`: `toggle-focus-mode` (Alt+Shift+F) since Phase 4; Phase 5 adds read-aloud keys.
+- `commands` (4, Chrome's maximum of suggested keys): Alt+Shift+F Focus Mode, Alt+Shift+K
+  play/pause, Alt+Shift+. / Alt+Shift+, next/previous sentence; MacCtrl+Shift+… on a Mac.
 - Not requested: `tabs`, `scripting`, `activeTab`, `tts`. Commands is a manifest key, not a permission.
   `commands.onCommand` passes the active tab, so the shortcut needs no `tabs` permission.
   Tabs opened before install get a "Reload this page" button in the popup instead of `scripting`.
@@ -178,6 +179,13 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
   `all: initial` blocks page CSS. The host is the only change to the page and is removed on close.
 - Opened by the popup tile (`visiofix:focus` `open`, then the popup closes) or Alt+Shift+F
   (background `commands.onCommand` → `toggle`). Works whether repairs are on or off.
+- Opening is two steps (Phase 5, at the user's request): the dialog opens at once with
+  `renderLoading()` ("Getting the page ready…" + spinner, `aria-busy`), waits for one paint
+  (rAF + task, 100ms cap), then extracts and swaps in the article. The loading content is
+  `opacity: 0` with a 300ms-delayed CSS reveal, so quick opens never show it; Chrome runs
+  opacity/transform animations on the compositor, so it appears and spins while extraction
+  blocks the main thread (verified with a CDP screencast on the stress page). Under reduced
+  motion the reveal stays, the spinner is hidden. Escape/shortcut during loading closes cleanly.
 - Settings: theme/text size in `focusPrefsItem`, speed in `speechPrefsItem`; "Aa" changes are
   saved, and changes made elsewhere while open apply live.
 - Font: `@font-face` inside a shadow root doesn't apply in Chrome, so the FontFace API registers
@@ -185,7 +193,8 @@ empty headings, including `role="heading"`/`aria-level`. Multiple h1s are not fl
   (`src/focus/font.ts`; unicode ranges match `fonts.css`, checked by a test). Verified: it loads
   even under `font-src 'none'` (content-script fonts aren't subject to the page's CSP); only the
   faces the text needs download.
-- Play/previous/next are in the toolbar but do nothing until Phase 5.
+- A status line under the progress bar (`setStatus`, inside an always-present `role="status"`
+  region) shows read-aloud messages; screen readers announce it, VisioFix never speaks it.
 
 **Extraction** (`src/focus/extract.ts`, only when opened, never changes the page)
 1. Copy the document. Walking the live page and the copy in parallel (same element order),
@@ -230,19 +239,46 @@ fresh elements, so no scripts, styles, classes or handlers can come along.
 - Themes: **High Contrast** (default): bg #000000, H1 #FFFF00, H2 #FFD700, body #FFFFFF,
   links #00FFFF underlined. **Dark**. **Light** (soft off-white, not pure white).
 
-### 3. Read-aloud (Focus Mode only)
-- speechSynthesis in the content script. One utterance per sentence (avoids Chrome's ~15s
-  cutoff; sentence start/end events drive the highlight). Split with `Intl.Segmenter`.
-- Highlight: wrap the sentence in a span in our overlay; background band + underline/outline
-  (not color alone); keep it in view (instant scroll under reduced motion). Sentence-level only.
-- Pause = cancel + remember the sentence; resume replays it (Chrome's pause/resume is unreliable).
-- Voices load async (`voiceschanged`). Default: local voice matching the page's `lang`.
-- Start from the top, from a paragraph's play button, or (keyboard) from the first paragraph on
-  screen. Previous/next sentence controls.
-- Proposed shortcuts (max 4 suggested in Chrome; users rebind at chrome://extensions/shortcuts):
-  Alt+Shift+F Focus Mode (registered in Phase 4), Alt+Shift+P play/pause, Alt+Shift+. /
-  Alt+Shift+, next/previous sentence. Check conflicts on Windows, macOS, ChromeOS in Phase 5
-  (on a Mac, Option+Shift+F types "Ï").
+### 3. Read-aloud (Focus Mode only) — built in Phase 5
+- speechSynthesis in the content script (`src/speech/`). One utterance per sentence (avoids
+  Chrome's ~15s cutoff); the highlight moves when each sentence is handed to the voice.
+- Sentences (`sentences.ts`): `Intl.Segmenter` in the page's `lang`; over 200 characters split at
+  `, ; : — –` in the second half, else a space. `markSentences()` runs once on the detached
+  article before it's shown: each sentence becomes `<span class="vf-sentence" data-sentence=N>`,
+  one span per text node (a sentence through a link = several spans). Read: h1–h6, p, li,
+  figcaption (each unit separately; nested list items are their own units). Not read: the
+  byline line, notices, `pre`, "Read from here" buttons, footnote superscripts ("1", "(2)",
+  "[note 1]", "[citation needed]"). During reading only classes change.
+- Player (`player.ts`): pause = cancel + remember; Play replays that sentence (Chrome's
+  pause/resume is unreliable). A token drops events from cancelled utterances (Chrome reports
+  them as "interrupted"); the current utterance is kept referenced (GC bug). `synth.resume()` if
+  Chrome was left paused. Next/previous while reading jump and keep reading; otherwise they only
+  move the highlight. Speed changes apply from the next sentence.
+- Voices (`voices.ts`): automatic = a local voice for the page's language (exact tag, then the
+  same language), system default among equals; never the browser default voice, which can be
+  online. Online voices only when allowed. A voice chosen in settings wins if it's still installed
+  and allowed. `loadVoices()` waits (≤2.5s) for Chrome's second voice list (see gotchas). No voice
+  for the language → a status message, nothing is read (never an English voice for French).
+- Starting: Play continues the paused sentence, else starts at the first sentence on screen
+  (the title at the top). "Read from here" (a mouse-only `aria-hidden` span in each top-level
+  paragraph's margin) starts at that paragraph. The popup's Read aloud and Alt+Shift+K with Focus
+  Mode closed open it and start at the top.
+- Chrome refuses `speak()` ("not-allowed") until the page has had a click or key press
+  (`navigator.userActivation.hasBeenActive`); the shortcuts and the popup don't count. Then Focus
+  Mode shows "Press Play to start reading…" and moves focus to Play: one Enter starts reading,
+  and every shortcut works on that page from then on. (`chrome.tts` would avoid this but needs
+  the `tts` permission, which the plan rules out.)
+- Highlight (`highlight.ts`): `is-current` on the spans (band + underline); keeps the sentence
+  between 10% and 80% of the visible height, landing at 30%; smooth, instant under reduced
+  motion; doesn't follow for 5s after the reader scrolls (wheel, touch, scroll keys).
+- Shortcuts: Alt+Shift+F, Alt+Shift+K (play/pause), Alt+Shift+. and Alt+Shift+, (next/previous).
+  Chrome 158 keeps Alt+Shift+P, R, X and Z for itself (a suggested Alt+Shift+P was never
+  assigned), so play/pause is K, as in YouTube and most web video players. Not S: ChromeOS opens
+  quick settings with Alt+Shift+S. Mac: MacCtrl+Shift+… (Option+Shift+letter types characters).
+  Settings and popup show "." and "," instead of Chrome's "Period"/"Comma" (`formatShortcut`).
+- Settings page: lists the browser's voices (computer's own, online ones only when allowed;
+  turning online voices off drops a chosen online voice) and "Play a sample" reads a sentence
+  with the chosen or automatic voice for the browser's language, or says why it can't.
 
 ### 4. Popup and settings
 - Popup and settings follow system light/dark. Font: Atkinson Hyperlegible Next.
@@ -346,7 +382,7 @@ src/
   entrypoints/  background.ts · content/index.ts · popup/ · options/ (open_in_tab)
   repair/       engine.ts · rules.ts · changes.ts · a11y.ts · link-names.ts · roles.ts · headings.ts
   focus/        model.ts · view.ts · focus.css · overlay.ts · extract.ts · build.ts · font.ts
-  speech/       sentences.ts · player.ts · highlight.ts
+  speech/       sentences.ts · voices.ts · player.ts · highlight.ts · read-aloud.ts
   shared/       site.ts · matches.ts · messages.ts · report.ts · settings.ts · commands.ts
   ui/           tokens.css · base.css · fonts.css · dom.ts · icons.ts (Lucide) · logo.ts · popup/ · options/
   assets/       brand.ts (the icon as data)
@@ -355,9 +391,10 @@ scripts/        build-icons.mjs · copy-fonts.mjs · serve-fixtures.mjs
 public/fonts/   Atkinson Hyperlegible Next woff2 files
 public/licenses/ OFL (font), ISC (Lucide), Apache 2.0 (Readability), MIT (dom-accessibility-api)
 public/icon/    16, 32, 48, 128 PNGs (from src/assets/brand.ts)
-tests/unit/     *.test.ts; repair/ has the engine and rule tests, focus/ the extraction and view tests
+tests/unit/     *.test.ts; repair/ engine and rules, focus/ extraction and view, speech/ read-aloud
+                (fake-speech.ts imitates Chrome's speechSynthesis)
 tests/fixtures/ index, legacy-bugs, controls, images (lazy, hidden, script-set src), aria, headings,
-                dynamic, stress, article (+ article.css, also with ?csp=strict), not-article
+                dynamic, stress, article (+ article.css, also with ?csp=strict), not-article, french
 store/          listing.md · permissions.md · screenshots/
 legacy/         reference only, excluded from the build
 ```
@@ -392,7 +429,14 @@ legacy/         reference only, excluded from the build
 - Pages that listen for keys in the capture phase can still see key presses made in Focus Mode
   (`isolateEvents` stops them bubbling out of the shadow root, which covers most sites).
 - Images inside table cells show as their description, except rows that are only a picture.
-- Voice quality depends on the OS; some systems have few local voices.
+- Voice quality depends on the OS; some systems have few local voices (this Windows machine:
+  David, Mark, Zira, all English). Pages in other languages need a voice for that language.
+- Read-aloud from the popup or a shortcut on a page you haven't clicked or typed in needs one
+  more Enter on Play (Chrome's rule, see §3).
+- The first Play in a tab can wait about a second for Chrome's list of local voices.
+- Sentence-level highlight only (no word-by-word). Speed changes apply from the next sentence.
+  Image descriptions and code blocks aren't read; captions are.
+- The Mac (MacCtrl+Shift+…) and ChromeOS shortcuts weren't tried on real hardware.
 - Gmail mutates constantly: the main performance risk. Not measured (needs a signed-in account);
   the stress fixture (21k elements + constant changes) costs ~0.3s of main thread over 6s, with
   no slice over ~10ms. Wikipedia, BBC News, YouTube: under 41ms total, slices under 9ms
@@ -417,6 +461,19 @@ legacy/         reference only, excluded from the build
 - Page CSP doesn't affect Focus Mode (verified with `?csp=strict`: no inline styles, no fonts,
   Trusted Types): WXT's `<style>` in the shadow root, the FontFace load and Readability's
   innerHTML use (on the copy) all run in the content script's world.
+- speechSynthesis voices arrive in two `voiceschanged` steps: first only Chrome's online "Google …"
+  voices, about a second later the computer's own (Microsoft David/Mark/Zira here). Choosing at
+  the first event finds no local voice. Headless Chrome has the local voices too, after the wait.
+- `speechSynthesis.speak()` fails with "not-allowed" until the page has user activation, also
+  from a content script; extension commands and popup clicks don't give the page activation.
+- `cancel()` then `speak()` right away works; the cancelled utterance reports "interrupted".
+- Chrome 158 doesn't assign a suggested Alt+Shift+P, R, X or Z (it uses them itself); a missing
+  shortcut shows as an empty `shortcut` in `commands.getAll()`. Probe with throwaway extensions
+  (Extensions.loadUnpacked) before choosing keys. Changing a suggested key doesn't re-assign it
+  for an existing install: remove and re-add the extension, or set it at
+  chrome://extensions/shortcuts.
+- Headless testing of speech: patch `speechSynthesis.speak` in the content script's isolated
+  world (CDP `Runtime.evaluate` with its context id) to set `volume = 0` and log the voice.
 
 ## Progress
 - **Phase 1: done (2026-11-16).** Legacy v1 extracted to `legacy/android-v1/` (zip deleted),
@@ -469,3 +526,16 @@ legacy/         reference only, excluded from the build
   margins; VisioFix's own link names shown as text; black-on-transparent images invisible.
   Also added the missing dom-accessibility-api license (it has shipped since Phase 3).
   Play/previous/next and the Read aloud tile do nothing yet (Phase 5).
+- **Phase 5: done (2026-11-21).** Read-aloud in Focus Mode: sentence marking (`Intl.Segmenter`),
+  player (pause = cancel + remember), sentence highlight that follows the reading, local voices
+  only by default with a "no voice for French" message instead of a wrong-language voice,
+  "Read from here" buttons, previous/next. Popup Read aloud and four shortcuts (Alt+Shift+F/K/./,).
+  Settings page voice list and "Play a sample". Loading indicator for slow opens (user request).
+  French fixture. 294 unit tests. Verified in headless Chrome 158 with the speech muted
+  (volume 0): reading starts at the title with Microsoft David (local), pause/resume replays the
+  sentence, next/previous, speed changes, closing stops speech, the article scrolls with the
+  reading on Wikipedia (662 sentences, no utterance over 161 characters), no speech on the French
+  page, the indicator shows during the stress page's busy second and never on a light article.
+  Found and fixed: Alt+Shift+P is taken by Chrome 158 (now K); Chrome needs page activation
+  before speaking (now "Press Play" + focus on Play); Chrome's second voice list; "[note 1]"
+  markers read aloud. Not tried with real audio or a real screen reader.

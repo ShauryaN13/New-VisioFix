@@ -5,7 +5,7 @@ import type { PopupModel } from '@/ui/popup/view';
 
 /** Sample data for the design preview. All names and text are made up. */
 
-const SHORTCUTS = { focusMode: 'Alt+Shift+F', readAloud: 'Alt+Shift+P' };
+const SHORTCUTS = { focusMode: 'Alt+Shift+F', readAloud: 'Alt+Shift+K' };
 const HOST = 'news.example.com';
 
 const busyReport: PageReport = {
@@ -162,10 +162,11 @@ export const optionsModel: OptionsModel = {
   voiceId: null,
   allowOnlineVoices: false,
   speed: 1,
+  sampleNote: null,
   shortcuts: [
     { action: 'Open or close Focus Mode', shortcut: 'Alt+Shift+F' },
-    { action: 'Play or pause reading', shortcut: 'Alt+Shift+P' },
-    { action: 'Next sentence', shortcut: 'Alt+Shift+.' },
-    { action: 'Previous sentence', shortcut: 'Alt+Shift+,' },
+    { action: 'Read aloud: play or pause', shortcut: 'Alt+Shift+K' },
+    { action: 'Read aloud: next sentence', shortcut: 'Alt+Shift+.' },
+    { action: 'Read aloud: previous sentence', shortcut: 'Alt+Shift+,' },
   ],
 };

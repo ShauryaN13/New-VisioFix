@@ -421,6 +421,60 @@
   transform-origin: left center;
 }
 
+/* ---------- Status line (read-aloud messages) ---------- */
+
+.vf-status {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 2px solid var(--f-notice-border);
+  background: var(--f-toolbar-bg);
+  color: var(--f-text);
+  font-size: 16px;
+}
+.vf-status .icon {
+  margin-top: 1px;
+}
+
+/* ---------- Loading (big pages) ---------- */
+
+/* Hidden for the first 300ms so quick opens don't flash it. Opacity and
+   transform animations run on Chrome's compositor, so this appears and spins
+   even while the main thread is busy reading the page. */
+.vf-loading {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  height: 100%;
+  font-size: 20px;
+  opacity: 0;
+  animation: vf-reveal 1ms linear 300ms forwards;
+}
+.vf-loading p {
+  margin: 0;
+}
+.vf-spinner {
+  width: 44px;
+  height: 44px;
+  border: 5px solid var(--f-progress-track);
+  border-top-color: var(--f-progress);
+  border-radius: 50%;
+  animation: vf-spin 0.9s linear infinite;
+}
+@keyframes vf-reveal {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes vf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Article (em sizes, scaled by --vf-text-size) ---------- */
 
 .vf-scroll {
@@ -591,6 +645,11 @@
 .vf-sentence.is-current a {
   color: inherit;
 }
+/* A sentence that runs through a link: the highlighted part of the link. */
+.vf-article a .vf-sentence.is-current,
+.vf-article a.vf-sentence.is-current {
+  color: var(--f-hl-text);
+}
 
 /* "Read from here": a mouse convenience in the left margin, shown on hover.
    Hidden from screen readers and the Tab order; keyboard users press Play,
@@ -666,6 +725,13 @@
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
+  }
+  /* The delayed reveal isn't motion: keep it. The spinner is: the text says it all. */
+  .vf-focus .vf-loading {
+    animation: vf-reveal 1ms linear 300ms forwards !important;
+  }
+  .vf-focus .vf-spinner {
+    display: none;
   }
   .vf-round:active,
   .vf-play:active,

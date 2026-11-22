@@ -29,6 +29,8 @@ export interface OptionsModel {
   voiceId: string | null;
   allowOnlineVoices: boolean;
   speed: number;
+  /** Shown under "Play a sample" when it can't play (no voice to use). */
+  sampleNote: string | null;
   shortcuts: { action: string; shortcut: string | null }[];
 }
 
@@ -339,10 +341,16 @@ function readAloudSection(model: OptionsModel, handlers: OptionsHandlers): HTMLE
       model.voices.length > 0 &&
         h(
           'button',
-          { type: 'button', class: 'btn btn-tonal row-action', onclick: () => handlers.onPlaySample() },
+          {
+            type: 'button',
+            class: 'btn btn-tonal row-action',
+            'data-focus-key': 'play-sample',
+            onclick: () => handlers.onPlaySample(),
+          },
           icon('play'),
           'Play a sample',
         ),
+      model.sampleNote ? h('p', { class: 'row-help', role: 'status' }, model.sampleNote) : null,
     ),
   );
 }

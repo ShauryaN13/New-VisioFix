@@ -100,6 +100,9 @@ const FOCUS_PAIRS: Pair[] = [
   ['primary-text', 'primary-bg', AAA], // Play
   ['primary-text', 'primary-hover', AAA],
   ['hl-text', 'hl-bg', AAA], // the sentence being read
+  ['text', 'toolbar-bg', AAA], // read-aloud status line
+  ['notice-border', 'toolbar-bg', NON_TEXT], // status line's bottom border
+  ['progress', 'bg', NON_TEXT], // loading spinner's moving arc
   ['control-border', 'toolbar-bg', NON_TEXT], // Close outline
   ['control-border', 'bg', NON_TEXT], // "read from here" button
   ['primary-bg', 'toolbar-bg', NON_TEXT], // Play button shape
