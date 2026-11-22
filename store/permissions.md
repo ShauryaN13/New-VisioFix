@@ -77,14 +77,11 @@ because no data leaves the computer.
 
 ## Privacy policy URL
 
-The policy is [`PRIVACY.md`](../PRIVACY.md). The dashboard needs a public web address for it, for
-example:
+https://github.com/ShauryaN13/New-VisioFix/blob/main/PRIVACY.md
 
-- https://github.com/ShauryaN13/New-VisioFix/blob/main/PRIVACY.md (works only if the repository is
-  public), or
-- a GitHub Pages site, or any page you control, with the same text.
-
-The policy includes the Limited Use statement the store asks for.
+That's [`PRIVACY.md`](../PRIVACY.md) in this (public) repository, so editing the file on `main`
+updates the published policy. Keep the "Last updated" date in step. The policy includes the Limited
+Use statement the store asks for.
 
 ## Test instructions tab (optional)
 

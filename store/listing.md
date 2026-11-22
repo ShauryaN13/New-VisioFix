@@ -78,9 +78,12 @@ All screenshots are 1280×800 and come from the real extension in Chrome on a ma
 ## Additional fields
 
 - **Official URL:** none (needs a verified site in Google Search Console).
-- **Homepage URL:** https://github.com/ShauryaN13/New-VisioFix (only if the repository is public)
-- **Support URL:** https://github.com/ShauryaN13/New-VisioFix/issues (same condition)
+- **Homepage URL:** https://github.com/ShauryaN13/New-VisioFix
+- **Support URL:** https://github.com/ShauryaN13/New-VisioFix/issues
 - **Mature content:** No.
+
+The privacy policy address goes in the Privacy practices tab (see `store/permissions.md`):
+https://github.com/ShauryaN13/New-VisioFix/blob/main/PRIVACY.md
 
 ## Distribution tab
 

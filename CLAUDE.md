@@ -409,7 +409,7 @@ tests/fixtures/ index, legacy-bugs, controls, images (lazy, hidden, script-set s
                 dynamic, stress, article (+ article.css, also with ?csp=strict), not-article, french
 store/          listing.md (Store listing tab) · permissions.md (Privacy tab) · test-checklist.md
                 screenshots/ · promo/ · demo/ (made-up news page for the screenshots)
-PRIVACY.md      privacy policy (needs a public URL for the dashboard)
+PRIVACY.md      privacy policy; its GitHub page is the store's policy URL (repo is public)
 legacy/         reference only, excluded from the build
 ```
 
